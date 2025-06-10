@@ -13,6 +13,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=ewm
 
   stats-db:
+    build: stats-db
     image: postgres:17.5
     container_name: stat-postgres
     ports:
@@ -27,23 +28,31 @@ services:
       interval: 5s
       retries: 10
 
-#  ewm-service:
-#    ports:
-#      - "8080:8080"
-#    depends_on:
-#      - ewm-db
-#
-#  ewm-db:
-#    image: postgres:17.5
-#    container_name: ewm-postgres
-#    ports:
-#      - "5432:5432"
-#    environment:
-#      - POSTGRES_PASSWORD=ewm
-#      - POSTGRES_USER=ewm
-#      - POSTGRES_DB=ewm
-#    healthcheck:
-#      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
-#      timeout: 5s
-#      interval: 5s
-#      retries: 10
+  ewm-service:
+    build: ewm-service
+    image: ewm-service
+    container_name: ewm-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ewm-db
+    environment:
+       - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:6432/ewm
+       - SPRING_DATASOURCE_USERNAME=ewm
+       - SPRING_DATASOURCE_PASSWORD=ewm
+
+  ewm-db:
+    build: ewm-db
+    image: postgres:17.5
+    container_name: service-postgres
+    ports:
+      - "6432:5432"
+    environment:
+      - POSTGRES_PASSWORD=ewm
+      - POSTGRES_USER=ewm
+      - POSTGRES_DB=ewm
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
