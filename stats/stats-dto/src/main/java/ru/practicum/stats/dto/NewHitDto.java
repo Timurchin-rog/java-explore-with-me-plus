@@ -1,13 +1,9 @@
 package ru.practicum.stats.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
-
-import java.net.InetAddress;
-import java.time.LocalDateTime;
 
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
