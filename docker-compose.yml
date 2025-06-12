@@ -1,16 +1,16 @@
 services:
-  stats-server:
-    build: stats-server
-    image: ewm-stats
-    container_name: ewm-stats
-    ports:
-      - "9090:9090"
-    depends_on:
-      - stats-db
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/ewm
-      - SPRING_DATASOURCE_USERNAME=ewm
-      - SPRING_DATASOURCE_PASSWORD=ewm
+#  stats-server:
+#    build: stats-server
+#    image: stats-server
+#    container_name: stats-server
+#    ports:
+#      - "9090:9090"
+#    depends_on:
+#      - stats-db
+#    environment:
+#      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/ewm
+#      - SPRING_DATASOURCE_USERNAME=ewm
+#      - SPRING_DATASOURCE_PASSWORD=ewm
 
   stats-db:
     image: postgres:17.5
@@ -28,16 +28,23 @@ services:
       retries: 10
 
 #  ewm-service:
+#    build: ewm-service
+#    image: main-service
+#    container_name: main-service
 #    ports:
 #      - "8080:8080"
 #    depends_on:
 #      - ewm-db
+#    environment:
+#      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:6432/ewm
+#      - SPRING_DATASOURCE_USERNAME=ewm
+#      - SPRING_DATASOURCE_PASSWORD=ewm
 #
 #  ewm-db:
 #    image: postgres:17.5
 #    container_name: ewm-postgres
 #    ports:
-#      - "5432:5432"
+#      - "6432:5432"
 #    environment:
 #      - POSTGRES_PASSWORD=ewm
 #      - POSTGRES_USER=ewm
