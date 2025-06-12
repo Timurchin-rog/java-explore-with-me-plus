@@ -1,8 +1,8 @@
 package ru.practicum.stats.mapper;
 
 import ru.practicum.stats.dto.ViewDto;
+import ru.practicum.stats.model.Hit;
 import ru.practicum.stats.model.View;
-import ru.practicum.stats.repository.ViewFromHit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,11 +26,10 @@ public class ViewMapper {
         return viewsResult;
     }
 
-    public static View mapToView(ViewFromHit viewFromHit, Integer hits) {
+    public static View mapToView(Hit hit) {
         return new View(
-                viewFromHit.getApp(),
-                viewFromHit.getUri(),
-                hits
+                hit.getApp(),
+                hit.getUri()
         );
     }
 }

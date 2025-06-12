@@ -9,22 +9,22 @@ import java.util.List;
 
 public interface HitRepository extends JpaRepository<Hit, Integer> {
 
-    @Query("SELECT COUNT(DISTINCT h.app, h.uri) " +
+    @Query("SELECT COUNT(h.uri) " +
             "FROM Hit h " +
             "WHERE h.app=?1 AND h.uri=?2")
     Integer findCountViews(String app, String uri);
 
-    @Query("SELECT DISTINCT h.app, h.uri " +
+    @Query("SELECT h " +
             "FROM Hit h " +
             "WHERE h.timestamp BETWEEN ?1 AND ?2 " +
             "AND h.uri IN ?3")
-    List<ViewFromHit> findAllViewsWithoutUniqueIp(LocalDateTime start, LocalDateTime end, List<String> uris);
+    List<Hit> findAllHitsWithoutUniqueIp(LocalDateTime start, LocalDateTime end, List<String> uris);
 
-    @Query("SELECT DISTINCT h.app, h.uri " +
+    @Query("SELECT h " +
             "FROM Hit h " +
             "WHERE h.timestamp BETWEEN ?1 AND ?2 " +
             "AND h.uri IN ?3 " +
             "AND h.ip LIKE (SELECT DISTINCT h.ip " +
             "FROM Hit h)")
-    List<ViewFromHit> findAllViewsWithUniqueIp(LocalDateTime start, LocalDateTime end, List<String> uris);
+    List<Hit> findAllHitsWithUniqueIp(LocalDateTime start, LocalDateTime end, List<String> uris);
 }

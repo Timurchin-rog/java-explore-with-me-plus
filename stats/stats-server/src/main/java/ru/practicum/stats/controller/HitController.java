@@ -1,5 +1,6 @@
 package ru.practicum.stats.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ public class HitController {
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public HitDto saveHit(@RequestBody NewHitDto newHit) {
+    public HitDto saveHit(@Valid @RequestBody NewHitDto newHit) {
         return hitService.saveHit(newHit);
     }
 

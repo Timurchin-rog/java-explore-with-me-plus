@@ -11,10 +11,10 @@ import ru.practicum.stats.mapper.ViewMapper;
 import ru.practicum.stats.model.Hit;
 import ru.practicum.stats.model.View;
 import ru.practicum.stats.repository.HitRepository;
-import ru.practicum.stats.repository.ViewFromHit;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -33,17 +33,19 @@ public class HitServiceImpl implements HitService {
 
     @Override
     public List<ViewDto> getViews(String startStr, String endStr, List<String> uris, boolean unique) {
-        List<ViewFromHit> viewsWithoutCountHit;
+        List<Hit> hits;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime start = LocalDateTime.parse(startStr, formatter);
         LocalDateTime end = LocalDateTime.parse(endStr, formatter);
         if (unique)
-            viewsWithoutCountHit = hitRepository.findAllViewsWithUniqueIp(start, end, uris);
+            hits = hitRepository.findAllHitsWithUniqueIp(start, end, uris);
         else
-            viewsWithoutCountHit = hitRepository.findAllViewsWithoutUniqueIp(start, end, uris);
-        List<View> viewsWithCountHit = viewsWithoutCountHit.stream()
-                .map(viewFromHit -> ViewMapper.mapToView(viewFromHit,
-                        hitRepository.findCountViews(viewFromHit.getApp(), viewFromHit.getUri())))
+            hits = hitRepository.findAllHitsWithoutUniqueIp(start, end, uris);
+        List<View> viewsWithCountHit = hits.stream()
+                .map(ViewMapper::mapToView)
+                .distinct()
+                .peek(view -> view.setHits(hitRepository.findCountViews(view.getApp(), view.getUri())))
+                .sorted(Comparator.comparing(View::getHits).reversed())
                 .toList();
         return ViewMapper.mapToViewDto(viewsWithCountHit);
     }
