@@ -1,10 +1,14 @@
 package ru.practicum.stats.model;
 
 import lombok.AccessLevel;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = "hits")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class View {
     String app;

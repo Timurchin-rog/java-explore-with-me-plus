@@ -33,20 +33,20 @@ public class HitServiceImpl implements HitService {
 
     @Override
     public List<ViewDto> getViews(String startStr, String endStr, List<String> uris, boolean unique) {
-        List<Hit> hits;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime start = LocalDateTime.parse(startStr, formatter);
         LocalDateTime end = LocalDateTime.parse(endStr, formatter);
+        List<Hit> hits;
         if (unique)
             hits = hitRepository.findAllHitsWithUniqueIp(start, end, uris);
         else
             hits = hitRepository.findAllHitsWithoutUniqueIp(start, end, uris);
-        List<View> viewsWithCountHit = hits.stream()
+        List<View> views = hits.stream()
                 .map(ViewMapper::mapToView)
                 .distinct()
                 .peek(view -> view.setHits(hitRepository.findCountViews(view.getApp(), view.getUri())))
                 .sorted(Comparator.comparing(View::getHits).reversed())
                 .toList();
-        return ViewMapper.mapToViewDto(viewsWithCountHit);
+        return ViewMapper.mapToViewDto(views);
     }
 }
