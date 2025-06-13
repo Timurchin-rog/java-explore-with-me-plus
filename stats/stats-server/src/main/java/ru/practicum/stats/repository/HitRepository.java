@@ -22,9 +22,21 @@ public interface HitRepository extends JpaRepository<Hit, Integer> {
 
     @Query("SELECT h " +
             "FROM Hit h " +
+            "WHERE h.timestamp BETWEEN ?1 AND ?2")
+    List<Hit> findAllHitsWithoutUniqueIp(LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT h " +
+            "FROM Hit h " +
             "WHERE h.timestamp BETWEEN ?1 AND ?2 " +
             "AND h.uri IN ?3 " +
             "AND h.ip LIKE (SELECT DISTINCT h.ip " +
             "FROM Hit h)")
     List<Hit> findAllHitsWithUniqueIp(LocalDateTime start, LocalDateTime end, List<String> uris);
+
+    @Query("SELECT h " +
+            "FROM Hit h " +
+            "WHERE h.timestamp BETWEEN ?1 AND ?2 " +
+            "AND h.ip LIKE (SELECT DISTINCT h.ip " +
+            "FROM Hit h)")
+    List<Hit> findAllHitsWithUniqueIp(LocalDateTime start, LocalDateTime end);
 }

@@ -37,10 +37,17 @@ public class HitServiceImpl implements HitService {
         LocalDateTime start = LocalDateTime.parse(startStr, formatter);
         LocalDateTime end = LocalDateTime.parse(endStr, formatter);
         List<Hit> hits;
-        if (unique)
-            hits = hitRepository.findAllHitsWithUniqueIp(start, end, uris);
-        else
-            hits = hitRepository.findAllHitsWithoutUniqueIp(start, end, uris);
+        if (uris == null) {
+            if (unique)
+                hits = hitRepository.findAllHitsWithUniqueIp(start, end);
+            else
+                hits = hitRepository.findAllHitsWithUniqueIp(start, end);
+        } else {
+            if (unique)
+                hits = hitRepository.findAllHitsWithUniqueIp(start, end, uris);
+            else
+                hits = hitRepository.findAllHitsWithoutUniqueIp(start, end, uris);
+        }
         List<View> views = hits.stream()
                 .map(ViewMapper::mapToView)
                 .distinct()
