@@ -1,4 +1,4 @@
-package ru.practicum.ewm;
+package ru.practicum.stats;
 
 
 import jakarta.validation.Valid;
@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
+import ru.practicum.stats.dto.NewHitDto;
+import ru.practicum.stats.dto.ViewDto;
 
 import java.util.List;
 
@@ -16,11 +18,11 @@ import java.util.List;
 @Service
 public class StatsClient {
     private final RestClient restClient;
-    @Value("stats-server-url")
-    String statsServiceUrl;
+    private final String statsServiceUrl;
 
-    public StatsClient() {
-        restClient = RestClient.create(statsServiceUrl);
+    public StatsClient(@Value("stats-server-url") String statsServiceUrl) {
+        this.statsServiceUrl = statsServiceUrl;
+        this.restClient = RestClient.create(statsServiceUrl);
     }
 
     // Регистрация "хита"
