@@ -26,7 +26,12 @@ public class HitController {
     public List<ViewDto> getViews(@RequestParam String start,
                                   @RequestParam String end,
                                   @RequestParam(required = false) List<String> uris,
-                                  @RequestParam(defaultValue = "false") boolean unique) {
-        return hitService.getViews(start, end, uris, unique);
+                                  @RequestParam(required = false) String unique) {
+        boolean isUnique = false;
+        if (unique != null) {
+            if (unique.equalsIgnoreCase("true"))
+                isUnique = true;
+        }
+        return hitService.getViews(start, end, uris, isUnique);
     }
 }

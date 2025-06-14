@@ -32,26 +32,33 @@ public class HitServiceImpl implements HitService {
     }
 
     @Override
-    public List<ViewDto> getViews(String startStr, String endStr, List<String> uris, boolean unique) {
+    public List<ViewDto> getViews(String startStr, String endStr, List<String> uris, boolean isUnique) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime start = LocalDateTime.parse(startStr, formatter);
         LocalDateTime end = LocalDateTime.parse(endStr, formatter);
         List<Hit> hits;
         if (uris == null) {
-            if (unique)
-                hits = hitRepository.findAllHitsWithUniqueIp(start, end);
-            else
-                hits = hitRepository.findAllHitsWithUniqueIp(start, end);
+            hits = hitRepository.findAllHitsWithoutUris(start, end);
+            if (isUnique)
+                hits = hits.stream()
+                        .distinct()
+                        .toList();
         } else {
-            if (unique)
-                hits = hitRepository.findAllHitsWithUniqueIp(start, end, uris);
-            else
-                hits = hitRepository.findAllHitsWithoutUniqueIp(start, end, uris);
+            hits = hitRepository.findAllHitsWithUris(start, end, uris);
+            if (isUnique)
+                hits = hits.stream()
+                        .distinct()
+                        .toList();
         }
         List<View> views = hits.stream()
                 .map(ViewMapper::mapToView)
                 .distinct()
-                .peek(view -> view.setHits(hitRepository.findCountViews(view.getApp(), view.getUri())))
+                .peek(view -> {
+                    if (isUnique)
+                        view.setHits(1);
+                    else
+                        view.setHits(hitRepository.findCountViews(view.getApp(), view.getUri()));
+                })
                 .sorted(Comparator.comparing(View::getHits).reversed())
                 .toList();
         return ViewMapper.mapToViewDto(views);

@@ -10,5 +10,5 @@ public interface HitService {
 
     HitDto saveHit(NewHitDto newHit);
 
-    List<ViewDto> getViews(String start, String end, List<String> uris, boolean unique);
+    List<ViewDto> getViews(String start, String end, List<String> uris, boolean isUnique);
 }
