@@ -20,7 +20,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class HitServiceImpl implements HitService {
+public class StatsServiceImpl implements StatsService {
 
     private final HitRepository hitRepository;
 

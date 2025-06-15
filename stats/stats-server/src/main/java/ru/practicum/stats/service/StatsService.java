@@ -6,7 +6,7 @@ import ru.practicum.stats.dto.ViewDto;
 
 import java.util.List;
 
-public interface HitService {
+public interface StatsService {
 
     HitDto saveHit(NewHitDto newHit);
 

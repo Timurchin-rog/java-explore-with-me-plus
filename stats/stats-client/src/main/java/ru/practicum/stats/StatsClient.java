@@ -20,7 +20,7 @@ public class StatsClient {
     private final RestClient restClient;
     private final String statsServiceUrl;
 
-    public StatsClient(@Value("stats-server-url") String statsServiceUrl) {
+    public StatsClient(@Value("${stats-server.url}") String statsServiceUrl) {
         this.statsServiceUrl = statsServiceUrl;
         this.restClient = RestClient.create(statsServiceUrl);
     }
