@@ -1,6 +1,6 @@
 package ru.practicum.stats.mapper;
 
-import ru.practicum.stats.dto.ViewDto;
+import ru.practicum.dto.ViewDto;
 import ru.practicum.stats.model.Hit;
 import ru.practicum.stats.model.View;
 

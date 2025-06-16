@@ -1,4 +1,4 @@
-package ru.practicum.stats;
+package ru.practicum.client;
 
 
 import jakarta.validation.Valid;
@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
-import ru.practicum.stats.dto.NewHitDto;
-import ru.practicum.stats.dto.ViewDto;
+import ru.practicum.dto.NewHitDto;
+import ru.practicum.dto.ViewDto;
 
 import java.util.List;
 

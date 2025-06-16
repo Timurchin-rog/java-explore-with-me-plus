@@ -1,4 +1,4 @@
-package ru.practicum.stats.dto;
+package ru.practicum.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
