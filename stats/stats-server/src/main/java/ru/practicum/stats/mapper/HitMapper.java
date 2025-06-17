@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class HitMapper {
+    private static String datePattern = "yyyy-MM-dd HH:mm:ss";
+
     public static HitDto mapToHitDto(Hit hit) {
         return HitDto.builder()
                 .id(hit.getId())
@@ -19,7 +21,7 @@ public class HitMapper {
     }
 
     public static Hit mapFromRequest(NewHitDto newHit) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
         return new Hit(
                 newHit.getApp(),
                 newHit.getUri(),

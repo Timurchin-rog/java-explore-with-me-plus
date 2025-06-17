@@ -23,6 +23,7 @@ import java.util.List;
 public class StatsServiceImpl implements StatsService {
 
     private final HitRepository hitRepository;
+    private String datePattern = "yyyy-MM-dd HH:mm:ss";
 
     @Override
     @Transactional
@@ -33,7 +34,7 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<ViewDto> getViews(String startStr, String endStr, List<String> uris, boolean isUnique) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
         LocalDateTime start = LocalDateTime.parse(startStr, formatter);
         LocalDateTime end = LocalDateTime.parse(endStr, formatter);
         List<Hit> hits;
