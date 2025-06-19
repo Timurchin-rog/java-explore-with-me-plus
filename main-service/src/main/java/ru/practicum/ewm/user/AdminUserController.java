@@ -1,5 +1,6 @@
 package ru.practicum.ewm.user;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,14 +24,17 @@ public class AdminUserController {
     public List<UserDto> getUsers(@RequestParam(required = false) List<Long> ids,
                                   @RequestParam(defaultValue = "0") int from,
                                   @RequestParam(defaultValue = "10") int size) {
-        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
-        Pageable page = PageRequest.of(from, size, sortById);
-        return userService.getUsers(ids, page).toList();
+        AdminUserParam param = AdminUserParam.builder()
+                .ids(ids)
+                .from(from)
+                .size(size)
+                .build();
+        return userService.getUsers(param);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto createUser(@RequestBody NewUserRequest user) {
+    public UserDto createUser(@Valid @RequestBody NewUserRequest user) {
         return userService.createUser(user);
     }
 
