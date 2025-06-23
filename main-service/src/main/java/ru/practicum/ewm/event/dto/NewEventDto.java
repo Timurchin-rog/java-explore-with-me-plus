@@ -16,6 +16,7 @@ public class NewEventDto {
     Long category;
     @NotBlank(message = "Описание не может быть пустым")
     String description;
+    @NotNull(message = "Дата события не может быть пустой")
     @Pattern(regexp = "yyyy-MM-dd HH:mm:ss", message = "Время события не соответствует паттерну: yyyy-MM-dd HH:mm:ss")
     String eventDate;
     @NotNull(message = "Объект локации не может быть пустым")
