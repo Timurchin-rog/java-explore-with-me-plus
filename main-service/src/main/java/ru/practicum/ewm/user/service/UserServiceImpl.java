@@ -1,18 +1,19 @@
 package ru.practicum.ewm.user.service;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.user.User;
-import ru.practicum.ewm.user.UserMapper;
-import ru.practicum.ewm.user.UserRepository;
+import ru.practicum.ewm.user.*;
 import ru.practicum.ewm.user.dto.NewUserRequest;
 import ru.practicum.ewm.exception.DuplicatedEmailException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.dto.UserDto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,11 +23,23 @@ public class UserServiceImpl implements UserService {
     private final UserRepository repository;
 
     @Override
-    public Page<UserDto> getUsers(List<Long> ids, Pageable page) {
-        if (ids == null || ids.isEmpty())
-            return UserMapper.fromPage(repository.findAll(page));
-        else
-            return UserMapper.fromPage(repository.findAllByIdIn(ids, page));
+    public List<UserDto> getUsers(AdminUserParam param) {
+        QUser user = QUser.user;
+        List<BooleanExpression> conditions = new ArrayList<>();
+
+        if (param.getIds() != null) {
+            for (Long paramId : param.getIds())
+                conditions.add(QUser.user.id.eq(paramId));
+        }
+
+        BooleanExpression finalCondition = conditions.stream()
+                .reduce(BooleanExpression::and)
+                .get();
+
+        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
+        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
+
+        return UserMapper.mapToUserDto(repository.findAll(finalCondition, page));
     }
 
     @Transactional

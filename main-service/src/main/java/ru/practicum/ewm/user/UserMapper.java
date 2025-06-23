@@ -1,10 +1,10 @@
 package ru.practicum.ewm.user;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import ru.practicum.ewm.user.dto.NewUserRequest;
 import ru.practicum.ewm.user.dto.UserDto;
+import ru.practicum.ewm.user.dto.UserShortDto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserMapper {
@@ -16,11 +16,21 @@ public class UserMapper {
                 .build();
     }
 
-    public static Page<UserDto> fromPage(Page<User> users) {
-        List<UserDto> usersDto = users.stream()
-                .map(UserMapper::mapToUserDto).toList();
+    public static List<UserDto> mapToUserDto(Iterable<User> users) {
+        List<UserDto> usersResult = new ArrayList<>();
 
-        return new PageImpl<>(usersDto, users.getPageable(), users.getTotalElements());
+        for (User user : users) {
+            usersResult.add(mapToUserDto(user));
+        }
+
+        return usersResult;
+    }
+
+    public static UserShortDto mapToUserShortDto(User user) {
+        return UserShortDto.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .build();
     }
 
     public static User mapFromRequest(NewUserRequest user) {
