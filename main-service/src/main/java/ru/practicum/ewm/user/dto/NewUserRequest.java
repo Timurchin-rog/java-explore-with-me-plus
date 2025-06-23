@@ -9,8 +9,9 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NewUserRequest {
-    @Email
+    @Email(message = "Имейл должен существовать")
+    @NotBlank(message = "Имейл не может быть пустым")
     String email;
-    @NotBlank
+    @NotBlank(message = "Имя не может быть пустым")
     String name;
 }
