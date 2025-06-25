@@ -63,6 +63,7 @@ public class Event {
                  State state,
                  String title) {
         this.annotation = annotation;
+        this.confirmedRequests = 0L;
         this.createdOn = LocalDateTime.now();
         this.description = description;
         this.eventDate = eventDate;
