@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
-    private final UserRepository repository;
+    private final UserRepository userRepository;
 
     @Override
     public List<UserDto> getUsers(AdminUserParam param) {
@@ -39,14 +39,14 @@ public class UserServiceImpl implements UserService {
         Sort sortById = Sort.by(Sort.Direction.ASC, "id");
         Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
 
-        return UserMapper.mapToUserDto(repository.findAll(finalCondition, page));
+        return UserMapper.mapToUserDto(userRepository.findAll(finalCondition, page));
     }
 
     @Transactional
     @Override
     public UserDto createUser(NewUserRequest userFromRequest) {
         checkDuplicatedEmail(userFromRequest.getEmail());
-        User newUser = repository.save(UserMapper.mapFromRequest(userFromRequest));
+        User newUser = userRepository.save(UserMapper.mapFromRequest(userFromRequest));
 
         return UserMapper.mapToUserDto(newUser);
     }
@@ -54,14 +54,14 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void removeUser(long userId) {
-        if (repository.findById(userId).isEmpty()) {
+        if (userRepository.findById(userId).isEmpty()) {
             throw new NotFoundException();
         }
-        repository.deleteById(userId);
+        userRepository.deleteById(userId);
     }
 
     private void checkDuplicatedEmail(String email) {
-        if (repository.findByEmailLike(email).isPresent())
+        if (userRepository.findByEmailLike(email).isPresent())
             throw new DuplicatedEmailException();
     }
 }
