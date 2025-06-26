@@ -9,10 +9,13 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.user.User;
 import ru.practicum.ewm.user.UserMapper;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EventMapper {
     private static String datePattern = "yyyy-MM-dd HH:mm:ss";
@@ -38,6 +41,16 @@ public class EventMapper {
                 .build();
     }
 
+    public static List<EventFullDto> mapToEventFullDto(Iterable<Event> events) {
+        List<EventFullDto> eventsResult = new ArrayList<>();
+
+        for (Event event : events) {
+            eventsResult.add(mapToEventFullDto(event));
+        }
+
+        return eventsResult;
+    }
+
     public static Location mapFromRequest(NewLocationDto location) {
         return new Location(
                 location.getLat(),
@@ -61,7 +74,6 @@ public class EventMapper {
                 validatePaid(event.getPaid()),
                 validateParticipantLimit(event.getParticipantLimit()),
                 validateRequestModeration(event.getRequestModeration()),
-                State.PUBLISHED,
                 validateTitle(event.getTitle())
         );
     }

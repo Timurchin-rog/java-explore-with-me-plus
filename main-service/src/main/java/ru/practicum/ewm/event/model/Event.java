@@ -60,7 +60,6 @@ public class Event {
                  Boolean paid,
                  Long participantLimit,
                  Boolean requestModeration,
-                 State state,
                  String title) {
         this.annotation = annotation;
         this.confirmedRequests = 0L;
@@ -72,7 +71,7 @@ public class Event {
         this.participantLimit = participantLimit;
         this.publishedOn = eventDate;
         this.requestModeration = requestModeration;
-        this.state = state;
+        this.state = State.PUBLISHED;
         this.title = title;
     }
 }

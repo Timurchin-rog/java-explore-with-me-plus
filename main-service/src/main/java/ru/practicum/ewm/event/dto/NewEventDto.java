@@ -23,6 +23,7 @@ public class NewEventDto {
     @NotNull(message = "Объект локации не может быть пустым")
     NewLocationDto location;
     Boolean paid;
+    @Positive
     Long participantLimit;
     Boolean requestModeration;
     @NotBlank(message = "Название не может быть пустым")
