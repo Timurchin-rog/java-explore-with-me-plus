@@ -6,7 +6,6 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.exception.ValidationException;
-import ru.practicum.ewm.user.User;
 import ru.practicum.ewm.user.UserMapper;
 
 import java.time.LocalDateTime;

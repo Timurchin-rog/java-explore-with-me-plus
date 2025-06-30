@@ -2,9 +2,6 @@ package ru.practicum.stats.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.HitDto;
@@ -50,10 +47,11 @@ public class StatsServiceImpl implements StatsService {
 
         conditions.add(QHit.hit.timestamp.between(start, end));
 
-        if (param.getUris()!= null) {
+        if (param.getUris() != null) {
             for (String uriParam : param.getUris())
                 conditions.add(QHit.hit.uri.eq(uriParam));
         }
+
         BooleanExpression finalCondition = conditions.stream()
                 .reduce(BooleanExpression::and)
                 .get();
