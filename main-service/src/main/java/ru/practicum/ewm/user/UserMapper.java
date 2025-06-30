@@ -36,12 +36,12 @@ public class UserMapper {
 
     public static User mapFromRequest(NewUserRequest user) {
         return new User(
-                user.getEmail(),
-                user.getName()
+                validateEmail(user.getEmail()),
+                validateName(user.getName())
         );
     }
 
-    private String validateEmail(String email) {
+    private static String validateEmail(String email) {
         if (email.length() < 6) {
             throw new ValidationException("Имейл не может быть меньше 6 символов");
         } else if (email.length() > 254) {
@@ -51,7 +51,7 @@ public class UserMapper {
         }
     }
 
-    private String validateName(String name) {
+    private static String validateName(String name) {
         if (name.length() < 2) {
             throw new ValidationException("Имя не может быть меньше 2 символов");
         } else if (name.length() > 250) {

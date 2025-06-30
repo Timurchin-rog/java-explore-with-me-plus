@@ -7,10 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.StatsClient;
+import ru.practicum.dto.ViewDto;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.event.EventMapper;
 import ru.practicum.ewm.event.PrivateEventParam;
+import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.dto.EventFullDto;
@@ -18,10 +21,9 @@ import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.event.repository.LocationRepository;
+import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.WrongTimeEventException;
-import ru.practicum.ewm.user.QUser;
-import ru.practicum.ewm.user.UserMapper;
 import ru.practicum.ewm.user.UserRepository;
 import ru.practicum.ewm.user.User;
 
@@ -30,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,13 +42,14 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
+    private final StatsClient statsClient;
 
     @Override
     public List<EventFullDto> getEventsOfUser(PrivateEventParam param) {
-        QEvent event = QEvent.event;
+        QEvent qEvent = QEvent.event;
         List<BooleanExpression> conditions = new ArrayList<>();
 
-        conditions.add(QEvent.event.id.eq(param.getId()));
+        conditions.add(QEvent.event.initiator.id.eq(param.getUserId()));
 
         BooleanExpression finalCondition = conditions.stream()
                 .reduce(BooleanExpression::and)
@@ -54,18 +58,71 @@ public class EventServiceImpl implements EventService {
         Sort sortById = Sort.by(Sort.Direction.ASC, "id");
         Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
 
-        return EventMapper.mapToEventFullDto(eventRepository.findAll(finalCondition, page));
+        List<EventFullDto> events = EventMapper.mapToEventFullDto(eventRepository.findAll(finalCondition, page));
+
+        List<String> uris = events.stream()
+                .map(event -> "/events/" + event.getId())
+                .toList();
+
+        List<ViewDto> views = statsClient.getStats(
+                "2020-05-05 00:00:00",
+                "2035-05-05 00:00:00",
+                uris,
+                false);
+
+        events = events.stream()
+                .peek(event -> {
+                    Optional<Integer> countViews = views.stream()
+                            .filter(view -> view.getUri().contains(event.getId().toString()))
+                            .map(ViewDto::getHits)
+                            .findFirst();
+                    if (countViews.isEmpty())
+                        event.setViews(0);
+                    else
+                        event.setViews(countViews.get());
+                })
+                .toList();
+
+        return events;
+    }
+
+    @Override
+    public EventFullDto getEventOfUser(PrivateEventParam param) {
+        EventFullDto event = EventMapper.mapToEventFullDto(
+                eventRepository.findByIdAndInitiator_Id(param.getEventId(), param.getUserId()).orElseThrow(
+                        () -> new NotFoundException(String.format("Событие id = %d не найдено", param.getEventId()))
+                )
+        );
+
+        String uri = "/events/" + param.getEventId();
+
+        List<ViewDto> views = statsClient.getStats(
+                "2020-05-05 00:00:00",
+                "2035-05-05 00:00:00",
+                List.of(uri),
+                false);
+
+        if (views.isEmpty())
+            event.setViews(0);
+        else
+            event.setViews(views.getFirst().getHits());
+
+        return event;
     }
 
     @Transactional
     @Override
-    public EventFullDto createEvent(NewEventDto eventFromRequest, long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Событие не может создать несуществующий пользователь"));
-        Category category = categoryRepository.findById(eventFromRequest.getCategory())
-                .orElseThrow(() -> new NotFoundException("Категория события не найдена"));
+    public EventFullDto createEvent(PrivateEventParam param) {
+        NewEventDto eventFromRequest = param.getNewEvent();
+        User user = userRepository.findById(param.getUserId()).orElseThrow(
+                () -> new NotFoundException(String.format("Пользователь id = %d не найден", param.getUserId()))
+        );
+        Long categoryId = eventFromRequest.getCategory();
+        Category category = categoryRepository.findById(categoryId).orElseThrow(
+                () -> new NotFoundException(String.format("Категория id = %d не найдена", categoryId))
+        );
         Location location = locationRepository.save(EventMapper.mapFromRequest(eventFromRequest.getLocation()));
-        checkEventTime(eventFromRequest);
+        checkEventTime(eventFromRequest.getEventDate());
         Event newEvent = eventRepository.save(EventMapper.mapFromRequest(eventFromRequest));
         newEvent.setCategory(category);
         newEvent.setInitiator(user);
@@ -73,11 +130,27 @@ public class EventServiceImpl implements EventService {
         return EventMapper.mapToEventFullDto(newEvent);
     }
 
-    private void checkEventTime(NewEventDto event) {
+    @Transactional
+    @Override
+    public EventFullDto updateEvent(PrivateEventParam param) {
+        Event oldEvent = eventRepository.findByIdAndInitiator_Id(param.getEventId(), param.getUserId()).orElseThrow(
+                () -> new NotFoundException(String.format("Событие id = %d не найдено", param.getEventId()))
+        );
+        if (oldEvent.getState().toString().equalsIgnoreCase("PUBLISHED"))
+            throw new ConflictException("Событие в публикации не может быть изменено");
+        UpdateEventUserRequest eventFromRequest = param.getEventOnUpdate();
+        if (eventFromRequest.getEventDate() != null)
+            checkEventTime(eventFromRequest.getEventDate());
+        Event newEvent = EventMapper.updateEventFields(oldEvent, eventFromRequest);
+        eventRepository.save(newEvent);
+        return EventMapper.mapToEventFullDto(newEvent);
+    }
+
+    private void checkEventTime(String eventDateStr) {
         String datePattern = "yyyy-MM-dd HH:mm:ss";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
 
-        LocalDateTime requestEventDate = LocalDateTime.parse(event.getEventDate(), formatter);
+        LocalDateTime requestEventDate = LocalDateTime.parse(eventDateStr, formatter);
         Duration duration = Duration.between(LocalDateTime.now(), requestEventDate);
         Duration minDuration = duration.minusHours(2);
         if (minDuration.isNegative() && !minDuration.isZero())

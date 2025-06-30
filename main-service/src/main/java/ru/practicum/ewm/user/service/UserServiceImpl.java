@@ -30,7 +30,8 @@ public class UserServiceImpl implements UserService {
         if (param.getIds() != null) {
             for (Long paramId : param.getIds())
                 conditions.add(QUser.user.id.eq(paramId));
-        }
+        } else
+            return UserMapper.mapToUserDto(userRepository.findAll());
 
         BooleanExpression finalCondition = conditions.stream()
                 .reduce(BooleanExpression::and)

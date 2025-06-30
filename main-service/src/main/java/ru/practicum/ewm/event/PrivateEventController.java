@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.service.EventService;
 
 import java.util.List;
@@ -17,23 +18,50 @@ public class PrivateEventController {
 
     private final EventService eventService;
     private final String eventsPath = "/{user-id}/events";
+    private final String eventPath = "/{user-id}/events/{event-id}";
 
     @GetMapping(eventsPath)
-    public List<EventFullDto> createEvent(@PathVariable(name = "user-id") long userId,
-                                          @RequestParam(defaultValue = "0") int from,
-                                          @RequestParam(defaultValue = "10") int size) {
+    public List<EventFullDto> getEventsOfUser(@PathVariable(name = "user-id") long userId,
+                                              @RequestParam(defaultValue = "0") int from,
+                                              @RequestParam(defaultValue = "10") int size) {
         PrivateEventParam param = PrivateEventParam.builder()
-                .id(userId)
+                .userId(userId)
                 .from(from)
                 .size(size)
                 .build();
         return eventService.getEventsOfUser(param);
     }
 
+    @GetMapping(eventPath)
+    public EventFullDto getEventOfUser(@PathVariable(name = "user-id") long userId,
+                                       @PathVariable(name = "event-id") long eventId) {
+        PrivateEventParam param = PrivateEventParam.builder()
+                .userId(userId)
+                .eventId(eventId)
+                .build();
+        return eventService.getEventOfUser(param);
+    }
+
     @PostMapping(eventsPath)
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto createEvent(@Valid @RequestBody NewEventDto event,
                                     @PathVariable(name = "user-id") long userId) {
-        return eventService.createEvent(event, userId);
+        PrivateEventParam param = PrivateEventParam.builder()
+                .newEvent(event)
+                .userId(userId)
+                .build();
+        return eventService.createEvent(param);
+    }
+
+    @PatchMapping(eventPath)
+    public EventFullDto updateEvent(@RequestBody UpdateEventUserRequest event,
+                                    @PathVariable(name = "user-id") long userId,
+                                    @PathVariable(name = "event-id") long eventId) {
+        PrivateEventParam param = PrivateEventParam.builder()
+                .eventOnUpdate(event)
+                .userId(userId)
+                .eventId(eventId)
+                .build();
+        return eventService.updateEvent(param);
     }
 }

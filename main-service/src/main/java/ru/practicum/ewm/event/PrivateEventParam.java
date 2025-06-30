@@ -4,12 +4,17 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
+import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 
 @Getter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PrivateEventParam {
-    Long id;
+    Long userId;
     int from;
     int size;
+    Long eventId;
+    NewEventDto newEvent;
+    UpdateEventUserRequest eventOnUpdate;
 }
