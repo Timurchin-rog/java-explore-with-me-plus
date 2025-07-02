@@ -1,10 +1,17 @@
 package ru.practicum.ewm.event.service;
 
+import ru.practicum.ewm.event.PrivateEventParam;
 import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.NewEventDto;
+
+import java.util.List;
 
 public interface EventService {
 
-    EventFullDto createEvent(NewEventDto event, long userId);
+    List<EventFullDto> getEventsOfUser(PrivateEventParam param);
 
+    EventFullDto getEventOfUser(PrivateEventParam param);
+
+    EventFullDto createEvent(PrivateEventParam param);
+
+    EventFullDto updateEvent(PrivateEventParam param);
 }

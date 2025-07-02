@@ -26,12 +26,13 @@ public class StatsController {
     public List<ViewDto> getViews(@RequestParam String start,
                                   @RequestParam String end,
                                   @RequestParam(required = false) List<String> uris,
-                                  @RequestParam(required = false) String unique) {
-        boolean isUnique = false;
-        if (unique != null) {
-            if (unique.equalsIgnoreCase("true"))
-                isUnique = true;
-        }
-        return statsService.getViews(start, end, uris, isUnique);
+                                  @RequestParam(defaultValue = "false") boolean unique) {
+        StatsParam param = StatsParam.builder()
+                .start(start)
+                .end(end)
+                .uris(uris)
+                .unique(unique)
+                .build();
+        return statsService.getViews(param);
     }
 }

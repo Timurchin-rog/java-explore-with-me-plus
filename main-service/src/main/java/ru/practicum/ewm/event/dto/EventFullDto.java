@@ -3,11 +3,13 @@ package ru.practicum.ewm.event.dto;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
 @Getter
+@Setter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventFullDto {
@@ -26,5 +28,5 @@ public class EventFullDto {
     Boolean requestModeration;
     String state;
     String title;
-    Long views;
+    Integer views;
 }

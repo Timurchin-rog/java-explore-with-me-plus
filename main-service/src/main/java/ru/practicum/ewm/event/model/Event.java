@@ -31,8 +31,6 @@ public class Event {
     String annotation;
     @ManyToOne
     Category category;
-    @Column(name = "confirmed_requests")
-    Long confirmedRequests;
     @Column(name = "created_on")
     LocalDateTime createdOn;
     String description;
@@ -60,10 +58,8 @@ public class Event {
                  Boolean paid,
                  Long participantLimit,
                  Boolean requestModeration,
-                 State state,
                  String title) {
         this.annotation = annotation;
-        this.confirmedRequests = 0L;
         this.createdOn = LocalDateTime.now();
         this.description = description;
         this.eventDate = eventDate;
@@ -72,7 +68,7 @@ public class Event {
         this.participantLimit = participantLimit;
         this.publishedOn = eventDate;
         this.requestModeration = requestModeration;
-        this.state = state;
+        this.state = State.PENDING;
         this.title = title;
     }
 }

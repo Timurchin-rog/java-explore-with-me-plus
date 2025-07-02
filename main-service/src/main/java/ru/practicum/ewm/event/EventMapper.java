@@ -1,10 +1,7 @@
 package ru.practicum.ewm.event;
 
 import ru.practicum.ewm.category.CategoryMapper;
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.LocationDto;
-import ru.practicum.ewm.event.dto.NewEventDto;
-import ru.practicum.ewm.event.dto.NewLocationDto;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.event.model.State;
@@ -13,6 +10,8 @@ import ru.practicum.ewm.user.UserMapper;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EventMapper {
     private static String datePattern = "yyyy-MM-dd HH:mm:ss";
@@ -23,10 +22,9 @@ public class EventMapper {
                 .id(event.getId())
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.mapToCategoryDto(event.getCategory()))
-                .confirmedRequests(event.getConfirmedRequests())
-                .createdOn(event.getCreatedOn().toString())
+                .createdOn(event.getCreatedOn().format(formatter))
                 .description(event.getDescription())
-                .eventDate(event.getEventDate().toString())
+                .eventDate(event.getEventDate().format(formatter))
                 .initiator(UserMapper.mapToUserShortDto(event.getInitiator()))
                 .location(mapToLocationDto(event.getLocation()))
                 .paid(event.getPaid())
@@ -36,6 +34,16 @@ public class EventMapper {
                 .state(event.getState().toString())
                 .title(event.getTitle())
                 .build();
+    }
+
+    public static List<EventFullDto> mapToEventFullDto(Iterable<Event> events) {
+        List<EventFullDto> eventsResult = new ArrayList<>();
+
+        for (Event event : events) {
+            eventsResult.add(mapToEventFullDto(event));
+        }
+
+        return eventsResult;
     }
 
     public static Location mapFromRequest(NewLocationDto location) {
@@ -61,7 +69,6 @@ public class EventMapper {
                 validatePaid(event.getPaid()),
                 validateParticipantLimit(event.getParticipantLimit()),
                 validateRequestModeration(event.getRequestModeration()),
-                State.PUBLISHED,
                 validateTitle(event.getTitle())
         );
     }
@@ -120,7 +127,7 @@ public class EventMapper {
         }
     }
 
-    public static Event updateEventFields(Event event, NewEventDto eventFromRequest) {
+    public static Event updateEventFields(Event event, UpdateEventUserRequest eventFromRequest) {
         if (eventFromRequest.hasAnnotation()) {
             event.setAnnotation(validateAnnotation(eventFromRequest.getAnnotation()));
         }
@@ -147,6 +154,13 @@ public class EventMapper {
 
         if (eventFromRequest.hasRequestModeration()) {
             event.setRequestModeration(eventFromRequest.getRequestModeration());
+        }
+
+        if (eventFromRequest.hasStateAction()) {
+            if (eventFromRequest.getStateAction().equalsIgnoreCase("SEND_TO_REVIEW"))
+                event.setState(State.PUBLISHED);
+            else if (eventFromRequest.getStateAction().equalsIgnoreCase("CANCEL_REVIEW"))
+                event.setState(State.CANCELED);
         }
 
         if (eventFromRequest.hasTitle()) {
