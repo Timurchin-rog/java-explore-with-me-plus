@@ -1,8 +1,13 @@
 package ru.practicum.ewm.event.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.ewm.event.PrivateEventParam;
+import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface EventService {
@@ -14,4 +19,12 @@ public interface EventService {
     EventFullDto createEvent(PrivateEventParam param);
 
     EventFullDto updateEvent(PrivateEventParam param);
+
+    Collection<EventShortDto> getPublicAllEvents(EventFilter filter, HttpServletRequest request);
+
+    EventFullDto getPublicEvent(Long eventId, HttpServletRequest request);
+
+    Collection<EventFullDto> getAdminAllEvents(EventFilter filter);
+
+    EventFullDto updateByAdmin(Long eventId, UpdateEventUserRequest updateEvent);
 }

@@ -39,6 +39,6 @@ CREATE TABLE IF NOT EXISTS events (
     published_on TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     request_moderation boolean NOT NULL,
     state VARCHAR(20) NOT NULL,
-    title VARCHAR(120) NOT NULL,
+    title VARCHAR(120) NOT NULL
     CONSTRAINT pk_event PRIMARY KEY (id)
 );
