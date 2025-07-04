@@ -1,7 +1,6 @@
 package ru.practicum.ewm.event.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,8 +17,7 @@ import ru.practicum.dto.NewHitDto;
 import ru.practicum.dto.ViewDto;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
-import ru.practicum.ewm.event.EventMapper;
-import ru.practicum.ewm.event.PrivateEventParam;
+import ru.practicum.ewm.event.*;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.PrivateEventParam;
@@ -130,73 +128,6 @@ public class EventServiceImpl implements EventService {
         return event;
     }
 
-
-    @Override
-    public List<EventFullDto> getEventsOfUser(PrivateEventParam param) {
-        QEvent qEvent = QEvent.event;
-        List<BooleanExpression> conditions = new ArrayList<>();
-
-        conditions.add(QEvent.event.initiator.id.eq(param.getUserId()));
-
-        BooleanExpression finalCondition = conditions.stream()
-                .reduce(BooleanExpression::and)
-                .get();
-
-        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
-        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
-
-        List<EventFullDto> events = EventMapper.mapToEventFullDto(eventRepository.findAll(finalCondition, page));
-
-        List<String> uris = events.stream()
-                .map(event -> "/events/" + event.getId())
-                .toList();
-
-        List<ViewDto> views = statsClient.getStats(
-                "2020-05-05 00:00:00",
-                "2035-05-05 00:00:00",
-                uris,
-                false);
-
-        events = events.stream()
-                .peek(event -> {
-                    Optional<Integer> countViews = views.stream()
-                            .filter(view -> view.getUri().contains(event.getId().toString()))
-                            .map(ViewDto::getHits)
-                            .findFirst();
-                    if (countViews.isEmpty())
-                        event.setViews(0);
-                    else
-                        event.setViews(countViews.get());
-                })
-                .toList();
-
-        return events;
-    }
-
-    @Override
-    public EventFullDto getEventOfUser(PrivateEventParam param) {
-        EventFullDto event = EventMapper.mapToEventFullDto(
-                eventRepository.findByIdAndInitiator_Id(param.getEventId(), param.getUserId()).orElseThrow(
-                        () -> new NotFoundException(String.format("Событие id = %d не найдено", param.getEventId()))
-                )
-        );
-
-        String uri = "/events/" + param.getEventId();
-
-        List<ViewDto> views = statsClient.getStats(
-                "2020-05-05 00:00:00",
-                "2035-05-05 00:00:00",
-                List.of(uri),
-                false);
-
-        if (views.isEmpty())
-            event.setViews(0);
-        else
-            event.setViews(views.getFirst().getHits());
-
-        return event;
-    }
-
     @Transactional
     @Override
     public EventFullDto createEvent(PrivateEventParam param) {
@@ -217,21 +148,6 @@ public class EventServiceImpl implements EventService {
         return EventMapper.mapToEventFullDto(newEvent);
     }
 
-    @Transactional
-    @Override
-    public EventFullDto updateEvent(PrivateEventParam param) {
-        Event oldEvent = eventRepository.findByIdAndInitiator_Id(param.getEventId(), param.getUserId()).orElseThrow(
-                () -> new NotFoundException(String.format("Событие id = %d не найдено", param.getEventId()))
-        );
-        if (oldEvent.getState().toString().equalsIgnoreCase("PUBLISHED"))
-            throw new ConflictException("Событие в публикации не может быть изменено");
-        UpdateEventUserRequest eventFromRequest = param.getEventOnUpdate();
-        if (eventFromRequest.getEventDate() != null)
-            checkEventTime(eventFromRequest.getEventDate());
-        Event newEvent = EventMapper.updateEventFields(oldEvent, eventFromRequest);
-        eventRepository.save(newEvent);
-        return EventMapper.mapToEventFullDto(newEvent);
-    }
     @Transactional
     @Override
     public EventFullDto updateEvent(PrivateEventParam param) {
