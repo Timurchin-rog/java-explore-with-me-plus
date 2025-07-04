@@ -1,6 +1,9 @@
 package ru.practicum.ewm.event.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -8,21 +11,22 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatsClient;
+import ru.practicum.dto.NewHitDto;
 import ru.practicum.dto.ViewDto;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.event.EventMapper;
 import ru.practicum.ewm.event.PrivateEventParam;
-import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.model.QEvent;
+import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.event.repository.EventRepository;
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.exception.WrongTimeEventException;
 import ru.practicum.ewm.user.UserRepository;
 import ru.practicum.ewm.user.User;
@@ -31,8 +35,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +49,9 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
     private final StatsClient statsClient;
+    private final JPAQueryFactory queryFactory;
+
+    final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public List<EventFullDto> getEventsOfUser(PrivateEventParam param) {
@@ -144,6 +153,160 @@ public class EventServiceImpl implements EventService {
         Event newEvent = EventMapper.updateEventFields(oldEvent, eventFromRequest);
         eventRepository.save(newEvent);
         return EventMapper.mapToEventFullDto(newEvent);
+    }
+
+    @Override
+    public Collection<EventShortDto> getPublicAllEvents(EventFilter filter, HttpServletRequest request) {
+        checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
+        saveView(request);
+        List<Event> events;
+        QEvent event = QEvent.event;
+        BooleanExpression exp;
+        exp = event.state.eq(State.PUBLISHED);
+        if (filter.getText() != null && !filter.getText().isBlank()) {
+            exp = exp.and(event.description.containsIgnoreCase(filter.getText()))
+                    .or(event.annotation.containsIgnoreCase(filter.getText()));
+        }
+        exp = exp.and(event.category.id.in(filter.getCategories()));
+        exp = exp.and(event.paid.eq(filter.getPaid()));
+        exp = exp.and(event.eventDate.after(filter.getRangeStart()));
+        exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
+        //тут реквесты должны быть
+//        if(filter.getOnlyAvailable()) {
+//            exp = exp.and(event.participantLimit.gt(event.confirmedRequests));
+//        }
+        JPAQuery<Event> query = queryFactory.selectFrom(event)
+                .where(exp)
+                .offset(filter.getFrom())
+                .limit(filter.getSize());
+        events = query.fetch();
+        return events.stream()
+                .map(event1 -> {
+                    EventShortDto eventShortDto = EventMapper.mapToShortDto(event1);
+                    eventShortDto.setViews(countView(event1.getId(), event1.getCreatedOn(), LocalDateTime.now()));
+                    return eventShortDto;
+                })
+                .sorted((e1, e2) -> filter.getSort().equals("EVENT_DATE") ?
+                        e1.getEventDate().compareTo(e2.getEventDate()) : e1.getViews().compareTo(e2.getViews()))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @Override
+    public Collection<EventFullDto> getAdminAllEvents(EventFilter filter) {
+        checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
+        List<Event> events;
+        QEvent event = QEvent.event;
+        BooleanExpression exp;
+        List<State> states = filter.getStates().stream()
+                .map(State::valueOf)
+                .toList();
+        exp = event.state.in(states);
+        exp = exp.and(event.initiator.id.in(filter.getUsers()));
+        exp = exp.and(event.category.id.in(filter.getCategories()));
+        exp = exp.and(event.eventDate.after(filter.getRangeStart()));
+        exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
+        JPAQuery<Event> query = queryFactory.selectFrom(event)
+                .where(exp)
+                .offset(filter.getFrom())
+                .limit(filter.getSize());
+        events = query.fetch();
+        return events.stream()
+                .map(event1 -> {
+                    EventFullDto eventFullDto = EventMapper.mapToEventFullDto(event1);
+                    eventFullDto.setViews(countView(event1.getId(), event1.getCreatedOn(), LocalDateTime.now()));
+                    return eventFullDto;
+                })
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @Override
+    public EventFullDto getPublicEvent(Long eventId, HttpServletRequest request) {
+        final Event event = findEventById(eventId);
+
+        if (!event.getState().equals(State.PUBLISHED)) {
+            throw new NotFoundException("Event with id=" + eventId + " was not found");
+        } else {
+            saveView(request);
+        }
+
+        final EventFullDto eventDto = EventMapper.mapToEventFullDto(event);
+        eventDto.setViews(countView(event.getId(), event.getCreatedOn(), LocalDateTime.now()));
+        return eventDto;
+    }
+
+    @Transactional
+    @Override
+    public EventFullDto updateByAdmin(Long eventId, UpdateEventUserRequest updateEvent){
+        Event event = findEventById(eventId);
+
+        validateEventDateForAdmin(updateEvent.getEventDate() == null ? event.getEventDate() :
+                LocalDateTime.parse(updateEvent.getEventDate(), formatter), updateEvent.getStateAction());
+        validateStatusForAdmin(event.getState(), updateEvent.getStateAction());
+        locationRepository.save(EventMapper.mapFromRequest(updateEvent.getLocation()));
+        EventMapper.updateEventFields(event, updateEvent);
+        if (event.getState() != null && event.getState().equals(State.PUBLISHED)) {
+            event.setPublishedOn(LocalDateTime.now());
+        }
+        Event newEvent = eventRepository.save(event);
+        EventFullDto eventFullDto = EventMapper.mapToEventFullDto(newEvent);
+        eventFullDto.setViews(countView(newEvent.getId(), newEvent.getCreatedOn(), LocalDateTime.now()));
+        return eventFullDto;
+    }
+
+    private void checkFilterDateRangeIsGood(LocalDateTime dateBegin, LocalDateTime dateEnd) {
+        if (dateBegin == null) {
+            return;
+        }
+        if (dateEnd == null) {
+            return;
+        }
+
+        if (dateBegin.isAfter(dateEnd)) {
+            throw new ValidationException(
+                    "Неверно задана дата начала и конца события в фильтре");
+        }
+    }
+
+    private Event findEventById(Long eventId) {
+
+        return eventRepository.findById(eventId).orElseThrow(
+                () -> new NotFoundException("Публичное событие с id = " + eventId + " не найдено")
+        );
+    }
+
+    private void saveView(HttpServletRequest request) {
+        NewHitDto hitDto = NewHitDto.builder()
+                .app("ewm-main-service")
+                .ip(request.getRemoteAddr())
+                .uri(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+        statsClient.registerHit(hitDto);
+    }
+
+    private Integer countView(Long eventId, LocalDateTime start, LocalDateTime end) {
+        List<String> uris = List.of("/events/" + eventId);
+        List<ViewDto> views = statsClient.getStats(start.format(formatter), end.format(formatter), uris, false);
+        Optional<Integer> countViews = views.stream()
+                .filter(view -> view.getUri().contains(eventId.toString()))
+                .map(ViewDto::getHits)
+                .findFirst();
+        return countViews.orElse(0);
+    }
+
+    private void validateEventDateForAdmin(LocalDateTime eventDate, String stateAction) {
+        if (stateAction != null && stateAction.equals("PUBLISH_EVENT") && eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
+            throw new ConflictException("Прошло более часа с момента публикации события");
+        }
+    }
+
+    private void validateStatusForAdmin(State state, String stateAction) {
+        if (!state.equals(State.PENDING) && stateAction.equals("PUBLISH_EVENT")) {
+            throw new ConflictException("Событие не в ожидании публикации");
+        }
+        if (state.equals(State.PUBLISHED) && stateAction.equals("REJECT_EVENT")) {
+            throw new ConflictException("Нельзя отклонить опубликованное событие");
+        }
     }
 
     private void checkEventTime(String eventDateStr) {
