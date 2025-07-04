@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.ewm.compilation.dto.NewCompilationDto;
+import ru.practicum.ewm.compilation.dto.UpdateCompilationRequest;
 
 @Getter
 @Builder
@@ -12,4 +13,5 @@ import ru.practicum.ewm.compilation.dto.NewCompilationDto;
 public class AdminCompilationParam {
     long compId;
     NewCompilationDto compilationFromRequest;
+    UpdateCompilationRequest compilationOnUpdate;
 }

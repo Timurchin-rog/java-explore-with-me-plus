@@ -6,14 +6,14 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.ewm.event.dto.EventShortDto;
 
-import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CompilationDto {
     Long id;
-    HashSet<EventShortDto> events;
+    Set<EventShortDto> events;
     Boolean pinned;
     String title;
 }

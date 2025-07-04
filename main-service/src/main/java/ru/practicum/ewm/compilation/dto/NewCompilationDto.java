@@ -1,19 +1,16 @@
 package ru.practicum.ewm.compilation.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.ewm.event.dto.EventShortDto;
 
-import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NewCompilationDto {
-    HashSet<Long> events;
+    Set<Long> events;
     Boolean pinned;
     @NotBlank(message = "Название подборки не может быть пустым")
     String title;

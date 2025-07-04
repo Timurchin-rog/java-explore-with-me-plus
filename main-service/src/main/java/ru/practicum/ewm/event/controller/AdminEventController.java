@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event;
+package ru.practicum.ewm.event.controller;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Positive;
