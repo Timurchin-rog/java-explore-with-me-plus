@@ -2,11 +2,14 @@ package ru.practicum.ewm.event;
 
 import ru.practicum.ewm.category.CategoryMapper;
 import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.category.dto.CategoryDto;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.user.UserMapper;
+import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -96,6 +99,17 @@ public class EventMapper {
         );
     }
 
+    public static EventShortDto mapToShortDto(Event event) {
+        return EventShortDto.builder()
+                .id(event.getId())
+                .annotation(event.getAnnotation())
+                .category(CategoryMapper.mapToCategoryDto(event.getCategory()))
+                .eventDate(event.getEventDate().format(formatter))
+                .initiator(UserMapper.mapToUserShortDto(event.getInitiator()))
+                .paid(event.getPaid())
+                .title(event.getTitle())
+                .build();
+    }
     private static String validateAnnotation(String annotation) {
         if (annotation.length() < 20) {
             throw new ValidationException("Аннотация к событию не может быть меньше 20 символов");
