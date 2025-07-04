@@ -6,7 +6,7 @@ import ru.practicum.ewm.compilation.dto.CompilationDto;
 import ru.practicum.ewm.compilation.param.PublicCompilationParam;
 import ru.practicum.ewm.compilation.service.CompilationService;
 
-import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping(path = "/compilations")
@@ -16,9 +16,9 @@ public class PublicCompilationController {
     private final CompilationService compilationService;
 
     @GetMapping
-    public List<CompilationDto> getCompilations(@RequestParam(required = false) boolean pinned,
-                                                @RequestParam(defaultValue = "0") int from,
-                                                @RequestParam(defaultValue = "10") int size) {
+    public Set<CompilationDto> getCompilations(@RequestParam(required = false) boolean pinned,
+                                               @RequestParam(defaultValue = "0") int from,
+                                               @RequestParam(defaultValue = "10") int size) {
         PublicCompilationParam param = PublicCompilationParam.builder()
                 .pinned(pinned)
                 .from(from)

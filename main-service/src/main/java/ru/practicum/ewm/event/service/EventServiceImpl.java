@@ -12,9 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatsClient;
 import ru.practicum.dto.ViewDto;
-import ru.practicum.client.StatsClient;
 import ru.practicum.dto.NewHitDto;
-import ru.practicum.dto.ViewDto;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.event.*;
@@ -22,7 +20,6 @@ import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.PrivateEventParam;
 import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.dto.EventFullDto;
@@ -43,10 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
