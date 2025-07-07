@@ -1,6 +1,7 @@
 package ru.practicum.ewm.event;
 
 import ru.practicum.ewm.category.CategoryMapper;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.model.Event;
@@ -13,6 +14,7 @@ import ru.practicum.ewm.user.dto.UserShortDto;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class EventMapper {
@@ -31,7 +33,7 @@ public class EventMapper {
                 .location(mapToLocationDto(event.getLocation()))
                 .paid(event.getPaid())
                 .participantLimit(event.getParticipantLimit())
-                .publishedOn(event.getPublishedOn().toString())
+                .publishedOn(event.getPublishedOn().format(formatter))
                 .requestModeration(event.getRequestModeration())
                 .state(event.getState().toString())
                 .title(event.getTitle())
@@ -43,6 +45,28 @@ public class EventMapper {
 
         for (Event event : events) {
             eventsResult.add(mapToEventFullDto(event));
+        }
+
+        return eventsResult;
+    }
+
+    public static EventShortDto mapToEventShortDto(Event event) {
+        return EventShortDto.builder()
+                .id(event.getId())
+                .annotation(event.getAnnotation())
+                .category(CategoryMapper.mapToCategoryDto(event.getCategory()))
+                .eventDate(event.getEventDate().format(formatter))
+                .initiator(UserMapper.mapToUserShortDto(event.getInitiator()))
+                .paid(event.getPaid())
+                .title(event.getTitle())
+                .build();
+    }
+
+    public static HashSet<EventShortDto> mapToEventShortDto (Iterable<Event> events) {
+        HashSet<EventShortDto> eventsResult = new HashSet<>();
+
+        for (Event event : events) {
+            eventsResult.add(mapToEventShortDto(event));
         }
 
         return eventsResult;

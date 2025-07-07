@@ -1,9 +1,12 @@
 package ru.practicum.ewm.event.service;
 
+import ru.practicum.ewm.event.PrivateEventParam;
 import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.ewm.event.PrivateEventParam;
 import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventFullDto;
+
+import java.util.List;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 
