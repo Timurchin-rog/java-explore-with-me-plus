@@ -17,10 +17,10 @@ import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.event.*;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.PrivateEventParam;
 import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
@@ -165,7 +165,7 @@ public class EventServiceImpl implements EventService {
         List<Event> events;
         QEvent event = QEvent.event;
         BooleanExpression exp;
-        exp = event.state.eq(State.PUBLISHED);
+        exp = event.state.eq(EventState.PUBLISHED);
         if (filter.getText() != null && !filter.getText().isBlank()) {
             exp = exp.and(event.description.containsIgnoreCase(filter.getText()))
                     .or(event.annotation.containsIgnoreCase(filter.getText()));
@@ -200,10 +200,10 @@ public class EventServiceImpl implements EventService {
         List<Event> events;
         QEvent event = QEvent.event;
         BooleanExpression exp;
-        List<State> states = filter.getStates().stream()
-                .map(State::valueOf)
+        List<EventState> eventStates = filter.getStates().stream()
+                .map(EventState::valueOf)
                 .toList();
-        exp = event.state.in(states);
+        exp = event.state.in(eventStates);
         exp = exp.and(event.initiator.id.in(filter.getUsers()));
         exp = exp.and(event.category.id.in(filter.getCategories()));
         exp = exp.and(event.eventDate.after(filter.getRangeStart()));
@@ -226,7 +226,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getPublicEvent(Long eventId, HttpServletRequest request) {
         final Event event = findEventById(eventId);
 
-        if (!event.getState().equals(State.PUBLISHED)) {
+        if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new NotFoundException("Event with id=" + eventId + " was not found");
         } else {
             saveView(request);
@@ -247,7 +247,7 @@ public class EventServiceImpl implements EventService {
         validateStatusForAdmin(event.getState(), updateEvent.getStateAction());
         locationRepository.save(EventMapper.mapFromRequest(updateEvent.getLocation()));
         EventMapper.updateEventFields(event, updateEvent);
-        if (event.getState() != null && event.getState().equals(State.PUBLISHED)) {
+        if (event.getState() != null && event.getState().equals(EventState.PUBLISHED)) {
             event.setPublishedOn(LocalDateTime.now());
         }
         Event newEvent = eventRepository.save(event);
@@ -303,11 +303,11 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void validateStatusForAdmin(State state, String stateAction) {
-        if (!state.equals(State.PENDING) && stateAction.equals("PUBLISH_EVENT")) {
+    private void validateStatusForAdmin(EventState eventState, String stateAction) {
+        if (!eventState.equals(EventState.PENDING) && stateAction.equals("PUBLISH_EVENT")) {
             throw new ConflictException("Событие не в ожидании публикации");
         }
-        if (state.equals(State.PUBLISHED) && stateAction.equals("REJECT_EVENT")) {
+        if (eventState.equals(EventState.PUBLISHED) && stateAction.equals("REJECT_EVENT")) {
             throw new ConflictException("Нельзя отклонить опубликованное событие");
         }
     }

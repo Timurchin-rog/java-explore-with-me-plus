@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 
 import lombok.AccessLevel;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.ewm.category.Category;
@@ -49,7 +48,7 @@ public class Event {
     @Column(name = "request_moderation")
     Boolean requestModeration;
     @Enumerated(EnumType.STRING)
-    State state;
+    EventState state;
     String title;
 
     public Event(String annotation,
@@ -69,7 +68,7 @@ public class Event {
         this.participantLimit = participantLimit;
         this.publishedOn = eventDate;
         this.requestModeration = requestModeration;
-        this.state = State.PENDING;
+        this.state = EventState.PENDING;
         this.title = title;
     }
 }
