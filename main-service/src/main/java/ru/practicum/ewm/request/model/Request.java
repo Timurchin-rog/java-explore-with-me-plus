@@ -24,7 +24,7 @@ public class Request {
     @ManyToOne
     User requester;
     @Enumerated(EnumType.STRING)
-    RequestState requestState;
+    RequestState state;
 
     LocalDateTime created;
 

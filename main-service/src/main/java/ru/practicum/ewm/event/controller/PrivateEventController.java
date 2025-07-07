@@ -9,6 +9,9 @@ import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.request.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
+import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
 import java.util.List;
 
@@ -20,6 +23,7 @@ public class PrivateEventController {
     private final EventService eventService;
     private final String eventsPath = "/{user-id}/events";
     private final String eventPath = "/{user-id}/events/{event-id}";
+    private final String requestsPath = "/{user-id}/events/{event-id}/requests";
 
     @GetMapping(eventsPath)
     public List<EventFullDto> getEventsOfUser(@PathVariable(name = "user-id") long userId,
@@ -64,5 +68,27 @@ public class PrivateEventController {
                 .eventId(eventId)
                 .build();
         return eventService.updateEvent(param);
+    }
+
+    @GetMapping(requestsPath)
+    public List<ParticipationRequestDto> getRequestsOfUser(@PathVariable(name = "user-id") long userId,
+                                                     @PathVariable(name = "event-id") long eventId) {
+        PrivateEventParam param = PrivateEventParam.builder()
+                .userId(userId)
+                .eventId(eventId)
+                .build();
+        return eventService.getRequestsOfUser(param);
+    }
+
+    @PatchMapping(requestsPath)
+    public EventRequestStatusUpdateResult updateStatusOfRequests(@RequestBody EventRequestStatusUpdateRequest request,
+                                                                 @PathVariable(name = "user-id") long userId,
+                                                                 @PathVariable(name = "event-id") long eventId) {
+        PrivateEventParam param = PrivateEventParam.builder()
+                .request(request)
+                .userId(userId)
+                .eventId(eventId)
+                .build();
+        return eventService.updateStatusOfRequests(param);
     }
 }

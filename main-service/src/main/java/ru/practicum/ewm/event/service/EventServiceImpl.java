@@ -31,6 +31,14 @@ import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.exception.WrongTimeEventException;
+import ru.practicum.ewm.request.RequestMapper;
+import ru.practicum.ewm.request.RequestRepository;
+import ru.practicum.ewm.request.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
+import ru.practicum.ewm.request.dto.ParticipationRequestDto;
+import ru.practicum.ewm.request.model.QRequest;
+import ru.practicum.ewm.request.model.Request;
+import ru.practicum.ewm.request.model.RequestState;
 import ru.practicum.ewm.user.UserRepository;
 import ru.practicum.ewm.user.User;
 
@@ -51,10 +59,12 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
+    private final RequestRepository requestRepository;
     private final StatsClient statsClient;
     private final JPAQueryFactory queryFactory;
 
-    final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static String datePattern = "yyyy-MM-dd HH:mm:ss";
+    final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
 
     @Override
     public List<EventFullDto> getEventsOfUser(PrivateEventParam param) {
@@ -159,6 +169,67 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public List<ParticipationRequestDto> getRequestsOfUser(PrivateEventParam param) {
+        QRequest qRequest = QRequest.request;
+        List<BooleanExpression> conditions = new ArrayList<>();
+
+        conditions.add(QRequest.request.requester.id.eq(param.getUserId()));
+        conditions.add(QRequest.request.event.id.eq(param.getEventId()));
+
+        BooleanExpression finalCondition = conditions.stream()
+                .reduce(BooleanExpression::and)
+                .get();
+
+        return RequestMapper.mapToRequestDto(requestRepository.findAll(finalCondition));
+    }
+
+    @Transactional
+    @Override
+    public EventRequestStatusUpdateResult updateStatusOfRequests(PrivateEventParam param) {
+        long userId = param.getUserId();
+        if (userRepository.findById(userId).isEmpty())
+                throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
+        long eventId = param.getEventId();
+        Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId).orElseThrow(
+                () -> new NotFoundException(String.format("Событие id = %d не найдено", eventId))
+        );
+        EventRequestStatusUpdateRequest requestOnUpdateStatus = param.getRequest();
+        EventRequestStatusUpdateResult updatedRequests = EventRequestStatusUpdateResult.builder().build();
+
+        if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
+        && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
+            return updatedRequests;
+        if (requestRepository.findCountConfirmedRequests(eventId) >= event.getParticipantLimit())
+            throw new ConflictException("Достигнут лимит запросов на участие в событии");
+
+        for (Long requestId : requestOnUpdateStatus.getRequestIds()) {
+            Request request = requestRepository.findById(requestId).orElseThrow(
+                    () -> new NotFoundException(String.format("Запрос id = %d не найден", requestId))
+            );
+
+            if (!request.getState().equals(RequestState.PENDING))
+                throw new ConflictException("Статус можно изменить только у заявок, находящихся в ожидании");
+
+            if (requestRepository.findCountConfirmedRequests(eventId) >= event.getParticipantLimit()) {
+                request.setState(RequestState.REJECTED);
+                requestRepository.save(request);
+            }
+
+            if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed")) {
+                request.setState(RequestState.CONFIRMED);
+                requestRepository.save(request);
+                updatedRequests.addConfirmedRequest(RequestMapper.mapToRequestDto(request));
+            } else if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("rejected")) {
+                request.setState(RequestState.REJECTED);
+                requestRepository.save(request);
+                updatedRequests.addRejectedRequest(RequestMapper.mapToRequestDto(request));
+            } else
+                throw new ValidationException("Заявки можно только подтверждать или отклонять");
+        }
+    return updatedRequests;
+    }
+
+    @Override
     public Collection<EventShortDto> getPublicAllEvents(EventFilter filter, HttpServletRequest request) {
         checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
         saveView(request);
@@ -174,10 +245,10 @@ public class EventServiceImpl implements EventService {
         exp = exp.and(event.paid.eq(filter.getPaid()));
         exp = exp.and(event.eventDate.after(filter.getRangeStart()));
         exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
-        //тут реквесты должны быть
-//        if(filter.getOnlyAvailable()) {
-//            exp = exp.and(event.participantLimit.gt(event.confirmedRequests));
-//        }
+//        if (filter.getOnlyAvailable()) {
+//            exp = exp.and(event.participantLimit.gt(requestRepository.findCountConfirmedRequests(event.id)));
+//        } поля confirmedRequests нет в сущности, так как придётся его постоянно обновлять.
+//        Лучше вычислять и вытаскивать из БД тогда, когда нужно. Не понимаю, как задействовать метод репозитория здесь
         JPAQuery<Event> query = queryFactory.selectFrom(event)
                 .where(exp)
                 .offset(filter.getFrom())

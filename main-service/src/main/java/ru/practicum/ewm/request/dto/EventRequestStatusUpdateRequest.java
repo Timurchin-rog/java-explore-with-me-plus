@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event.dto;
+package ru.practicum.ewm.request.dto;
 
 import lombok.AccessLevel;
 import lombok.Getter;

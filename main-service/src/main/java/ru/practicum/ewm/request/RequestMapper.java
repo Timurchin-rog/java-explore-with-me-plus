@@ -1,5 +1,6 @@
 package ru.practicum.ewm.request;
 
+import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 import ru.practicum.ewm.request.model.Request;
 
 import java.time.format.DateTimeFormatter;
@@ -15,7 +16,7 @@ public class RequestMapper {
                 .id(request.getId())
                 .event(request.getEvent().getId())
                 .requester(request.getRequester().getId())
-                .status(request.getRequestState().name())
+                .status(request.getState().name())
                 .created(request.getCreated().format(formatter))
                 .build();
     }

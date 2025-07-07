@@ -13,7 +13,7 @@ import ru.practicum.ewm.request.model.QRequest;
 import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.request.RequestMapper;
 import ru.practicum.ewm.request.RequestRepository;
-import ru.practicum.ewm.request.ParticipationRequestDto;
+import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 import ru.practicum.ewm.request.PrivateRequestParam;
 import ru.practicum.ewm.request.model.RequestState;
 import ru.practicum.ewm.user.User;
@@ -62,12 +62,12 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Инициатор события не может добавить запрос на участие в своём событии");
         if (!event.getState().equals(EventState.PUBLISHED))
             throw new ConflictException("Нельзя учавствовать в неопубликованном событии");
-        if (requestRepository.findCountRequests(eventId) >= event.getParticipantLimit())
+        if (requestRepository.findCountConfirmedRequests(eventId) >= event.getParticipantLimit())
             throw new ConflictException("Достигнут лимит запросов на участие в событии");
 
         Request request = new Request(event, requester);
         if (!event.getRequestModeration())
-            request.setRequestState(RequestState.CONFIRMED);
+            request.setState(RequestState.CONFIRMED);
 
         Request newRequest = requestRepository.save(request);
         return RequestMapper.mapToRequestDto(newRequest);
@@ -102,7 +102,7 @@ public class RequestServiceImpl implements RequestService {
                 () -> new NotFoundException(String.format("Запрос id = %d не найден", requestId))
         );
 
-        request.setRequestState(RequestState.PENDING);
+        request.setState(RequestState.PENDING);
         return RequestMapper.mapToRequestDto(request);
     }
 
