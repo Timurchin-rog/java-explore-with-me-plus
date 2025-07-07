@@ -9,6 +9,8 @@ import ru.practicum.ewm.event.dto.EventFullDto;
 import java.util.List;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
+import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
 import java.util.Collection;
 import java.util.List;
@@ -22,6 +24,10 @@ public interface EventService {
     EventFullDto createEvent(PrivateEventParam param);
 
     EventFullDto updateEvent(PrivateEventParam param);
+
+    List<ParticipationRequestDto> getRequestsOfUser(PrivateEventParam param);
+
+    EventRequestStatusUpdateResult updateStatusOfRequests(PrivateEventParam param);
 
     Collection<EventShortDto> getPublicAllEvents(EventFilter filter, HttpServletRequest request);
 

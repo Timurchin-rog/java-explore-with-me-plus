@@ -2,14 +2,11 @@ package ru.practicum.ewm.event;
 
 import ru.practicum.ewm.category.CategoryMapper;
 import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.category.dto.CategoryDto;
-import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.model.Location;
-import ru.practicum.ewm.event.model.State;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.user.UserMapper;
-import ru.practicum.ewm.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -195,9 +192,9 @@ public class EventMapper {
 
         if (eventFromRequest.hasStateAction()) {
             if (eventFromRequest.getStateAction().equalsIgnoreCase("SEND_TO_REVIEW"))
-                event.setState(State.PUBLISHED);
+                event.setState(EventState.PUBLISHED);
             else if (eventFromRequest.getStateAction().equalsIgnoreCase("CANCEL_REVIEW"))
-                event.setState(State.CANCELED);
+                event.setState(EventState.CANCELED);
         }
 
         if (eventFromRequest.hasTitle()) {
