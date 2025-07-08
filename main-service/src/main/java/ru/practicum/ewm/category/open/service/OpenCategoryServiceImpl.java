@@ -36,12 +36,8 @@ public class OpenCategoryServiceImpl implements OpenCategoryService {
 
     @Override
     public CategoryDto getCategory(long catId) {
-        Optional<Category> mayBeCategory = repository.findById(catId);
-        if (mayBeCategory.isEmpty()) {
-            log.debug("Категории с id {} не существует", catId);
-            throw new NotFoundException();
-        }
-        return CategoryMapper.mapToCategoryDto(mayBeCategory.get());
+        return CategoryMapper.mapToCategoryDto(repository.findById(catId)
+                .orElseThrow(() -> new NotFoundException("Категория " + catId + " не найдена")));
     }
 
 }

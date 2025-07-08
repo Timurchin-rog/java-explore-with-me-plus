@@ -232,6 +232,69 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public List<ParticipationRequestDto> getRequestsOfUser(PrivateEventParam param) {
+        QRequest qRequest = QRequest.request;
+        List<BooleanExpression> conditions = new ArrayList<>();
+
+        conditions.add(QRequest.request.requester.id.eq(param.getUserId()));
+        conditions.add(QRequest.request.event.id.eq(param.getEventId()));
+
+        BooleanExpression finalCondition = conditions.stream()
+                .reduce(BooleanExpression::and)
+                .get();
+
+        return RequestMapper.mapToRequestDto(requestRepository.findAll(finalCondition));
+    }
+
+    @Transactional
+    @Override
+    public EventRequestStatusUpdateResult updateStatusOfRequests(PrivateEventParam param) {
+        long userId = param.getUserId();
+        if (userRepository.findById(userId).isEmpty())
+                throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
+        long eventId = param.getEventId();
+        Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId).orElseThrow(
+                () -> new NotFoundException(String.format("Событие id = %d не найдено", eventId))
+        );
+        EventRequestStatusUpdateRequest requestOnUpdateStatus = param.getRequest();
+        EventRequestStatusUpdateResult updatedRequests = EventRequestStatusUpdateResult.builder().build();
+
+        if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
+        && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
+            return updatedRequests;
+        if (event.getConfirmedRequests() >= event.getParticipantLimit())
+            throw new ConflictException("Достигнут лимит запросов на участие в событии");
+
+        for (Long requestId : requestOnUpdateStatus.getRequestIds()) {
+            Request request = requestRepository.findById(requestId).orElseThrow(
+                    () -> new NotFoundException(String.format("Запрос id = %d не найден", requestId))
+            );
+
+            if (!request.getState().equals(RequestState.PENDING))
+                throw new ConflictException("Статус можно изменить только у заявок, находящихся в ожидании");
+
+            if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
+                request.setState(RequestState.REJECTED);
+                requestRepository.save(request);
+            }
+
+            if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed")) {
+                request.setState(RequestState.CONFIRMED);
+                requestRepository.save(request);
+                event.setConfirmedRequests(+1L);
+                eventRepository.save(event);
+                updatedRequests.addConfirmedRequest(RequestMapper.mapToRequestDto(request));
+            } else if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("rejected")) {
+                request.setState(RequestState.REJECTED);
+                requestRepository.save(request);
+                updatedRequests.addRejectedRequest(RequestMapper.mapToRequestDto(request));
+            } else
+                throw new ValidationException("Заявки можно только подтверждать или отклонять");
+        }
+    return updatedRequests;
+    }
+
+    @Override
     public Collection<EventShortDto> getPublicAllEvents(EventFilter filter, HttpServletRequest request) {
         checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
         saveView(request);

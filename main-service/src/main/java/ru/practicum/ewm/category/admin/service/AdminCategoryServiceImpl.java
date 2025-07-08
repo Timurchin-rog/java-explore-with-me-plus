@@ -51,7 +51,8 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
     }
 
     private Category getCategoryBiId(long id) {
-        return repository.findById(id).orElseThrow(NotFoundException::new);
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Категория " + id + " не найдена"));
     }
 
     private void isDuplicateName(String name) {
