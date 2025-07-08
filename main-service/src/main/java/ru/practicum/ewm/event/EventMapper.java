@@ -23,6 +23,7 @@ public class EventMapper {
                 .id(event.getId())
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.mapToCategoryDto(event.getCategory()))
+                .confirmedRequests(event.getConfirmedRequests())
                 .createdOn(event.getCreatedOn().format(formatter))
                 .description(event.getDescription())
                 .eventDate(event.getEventDate().format(formatter))
@@ -52,6 +53,7 @@ public class EventMapper {
                 .id(event.getId())
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.mapToCategoryDto(event.getCategory()))
+                .confirmedRequests(event.getConfirmedRequests())
                 .eventDate(event.getEventDate().format(formatter))
                 .initiator(UserMapper.mapToUserShortDto(event.getInitiator()))
                 .paid(event.getPaid())
@@ -96,17 +98,6 @@ public class EventMapper {
         );
     }
 
-    public static EventShortDto mapToShortDto(Event event) {
-        return EventShortDto.builder()
-                .id(event.getId())
-                .annotation(event.getAnnotation())
-                .category(CategoryMapper.mapToCategoryDto(event.getCategory()))
-                .eventDate(event.getEventDate().format(formatter))
-                .initiator(UserMapper.mapToUserShortDto(event.getInitiator()))
-                .paid(event.getPaid())
-                .title(event.getTitle())
-                .build();
-    }
     private static String validateAnnotation(String annotation) {
         if (annotation.length() < 20) {
             throw new ValidationException("Аннотация к событию не может быть меньше 20 символов");

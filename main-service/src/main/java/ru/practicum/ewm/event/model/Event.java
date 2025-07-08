@@ -31,6 +31,8 @@ public class Event {
     String annotation;
     @ManyToOne
     Category category;
+    @Column(name = "confirmed_requests")
+    Long confirmedRequests;
     @Column(name = "created_on")
     LocalDateTime createdOn;
     String description;
@@ -60,6 +62,7 @@ public class Event {
                  Boolean requestModeration,
                  String title) {
         this.annotation = annotation;
+        this.confirmedRequests = 0L;
         this.createdOn = LocalDateTime.now();
         this.description = description;
         this.eventDate = eventDate;
@@ -71,4 +74,5 @@ public class Event {
         this.state = EventState.PENDING;
         this.title = title;
     }
+
 }
