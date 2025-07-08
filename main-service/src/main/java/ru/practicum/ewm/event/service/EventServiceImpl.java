@@ -228,7 +228,7 @@ public class EventServiceImpl implements EventService {
             } else
                 throw new ValidationException("Заявки можно только подтверждать или отклонять");
         }
-    return updatedRequests;
+        return updatedRequests;
     }
 
     @Override

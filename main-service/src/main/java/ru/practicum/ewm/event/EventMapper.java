@@ -174,6 +174,8 @@ public class EventMapper {
         }
 
         if (eventFromRequest.hasParticipantLimit()) {
+            if (eventFromRequest.getParticipantLimit() < 0)
+                throw new ValidationException("Лимит участников не может быть отрицательным");
             event.setParticipantLimit(eventFromRequest.getParticipantLimit());
         }
 
