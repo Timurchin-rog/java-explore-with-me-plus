@@ -199,7 +199,7 @@ public class EventServiceImpl implements EventService {
         if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
         && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
             return updatedRequests;
-        if (requestRepository.findCountConfirmedRequests(eventId) >= event.getParticipantLimit())
+        if (event.getConfirmedRequests() >= event.getParticipantLimit())
             throw new ConflictException("Достигнут лимит запросов на участие в событии");
 
         for (Long requestId : requestOnUpdateStatus.getRequestIds()) {
@@ -210,7 +210,7 @@ public class EventServiceImpl implements EventService {
             if (!request.getState().equals(RequestState.PENDING))
                 throw new ConflictException("Статус можно изменить только у заявок, находящихся в ожидании");
 
-            if (requestRepository.findCountConfirmedRequests(eventId) >= event.getParticipantLimit()) {
+            if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
                 request.setState(RequestState.REJECTED);
                 requestRepository.save(request);
             }
@@ -218,6 +218,8 @@ public class EventServiceImpl implements EventService {
             if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed")) {
                 request.setState(RequestState.CONFIRMED);
                 requestRepository.save(request);
+                event.setConfirmedRequests(+1L);
+                eventRepository.save(event);
                 updatedRequests.addConfirmedRequest(RequestMapper.mapToRequestDto(request));
             } else if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("rejected")) {
                 request.setState(RequestState.REJECTED);
@@ -245,10 +247,9 @@ public class EventServiceImpl implements EventService {
         exp = exp.and(event.paid.eq(filter.getPaid()));
         exp = exp.and(event.eventDate.after(filter.getRangeStart()));
         exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
-//        if (filter.getOnlyAvailable()) {
-//            exp = exp.and(event.participantLimit.gt(requestRepository.findCountConfirmedRequests(event.id)));
-//        } поля confirmedRequests нет в сущности, так как придётся его постоянно обновлять.
-//        Лучше вычислять и вытаскивать из БД тогда, когда нужно. Не понимаю, как задействовать метод репозитория здесь
+        if (filter.getOnlyAvailable()) {
+            exp = exp.and(event.participantLimit.gt(event.confirmedRequests));
+        }
         JPAQuery<Event> query = queryFactory.selectFrom(event)
                 .where(exp)
                 .offset(filter.getFrom())
@@ -256,7 +257,7 @@ public class EventServiceImpl implements EventService {
         events = query.fetch();
         return events.stream()
                 .map(event1 -> {
-                    EventShortDto eventShortDto = EventMapper.mapToShortDto(event1);
+                    EventShortDto eventShortDto = EventMapper.mapToEventShortDto(event1);
                     eventShortDto.setViews(countView(event1.getId(), event1.getCreatedOn(), LocalDateTime.now()));
                     return eventShortDto;
                 })

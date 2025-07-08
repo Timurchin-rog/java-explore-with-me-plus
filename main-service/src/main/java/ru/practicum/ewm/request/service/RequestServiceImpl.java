@@ -62,12 +62,15 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Инициатор события не может добавить запрос на участие в своём событии");
         if (!event.getState().equals(EventState.PUBLISHED))
             throw new ConflictException("Нельзя учавствовать в неопубликованном событии");
-        if (requestRepository.findCountConfirmedRequests(eventId) >= event.getParticipantLimit())
+        if (event.getConfirmedRequests() >= event.getParticipantLimit())
             throw new ConflictException("Достигнут лимит запросов на участие в событии");
 
         Request request = new Request(event, requester);
-        if (!event.getRequestModeration())
+        if (!event.getRequestModeration()) {
             request.setState(RequestState.CONFIRMED);
+            event.setConfirmedRequests(+1L);
+            eventRepository.save(event);
+        }
 
         Request newRequest = requestRepository.save(request);
         return RequestMapper.mapToRequestDto(newRequest);
@@ -94,9 +97,8 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public ParticipationRequestDto updateRequest(PrivateRequestParam param) {
         long userId = param.getUserId();
-        User requester = userRepository.findById(userId).orElseThrow(
-                () -> new NotFoundException(String.format("Пользователь id = %d не найден", userId))
-        );
+        if (userRepository.findById(userId).isEmpty())
+                throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
         long requestId = param.getRequestId();
         Request request = requestRepository.findById(requestId).orElseThrow(
                 () -> new NotFoundException(String.format("Запрос id = %d не найден", requestId))
