@@ -9,6 +9,7 @@ import ru.practicum.ewm.category.CategoryMapper;
 import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.category.dto.NewCategoryRequest;
+import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 
@@ -19,6 +20,7 @@ import ru.practicum.ewm.exception.NotFoundException;
 @Slf4j
 public class AdminCategoryServiceImpl implements AdminCategoryService {
     private final CategoryRepository repository;
+    private final EventRepository eventRepository;
 
     @Transactional
     @Override
@@ -32,8 +34,10 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
     @Transactional
     @Override
     public void removeCategory(long catId) {
-        //тут должна быть проверка на то существуют ли события, связанные с категорией. Если да то код 409
         getCategoryBiId(catId);
+        if (eventRepository.existsByCategoryId(catId)) {
+            throw new ConflictException("Нельзя удалить категорию: существуют связанные события");
+        }
         log.debug("удаляем категорию с id {}", catId);
         repository.deleteById(catId);
     }

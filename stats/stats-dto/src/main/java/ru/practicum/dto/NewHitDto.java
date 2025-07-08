@@ -1,6 +1,7 @@
 package ru.practicum.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +22,6 @@ public class NewHitDto {
         @NotBlank(message = "Ip must not be null")
         String ip;
 
-        @NotBlank(message = "Timestamp must not be null")
+        @NotNull(message = "Timestamp must not be null")
         LocalDateTime timestamp;
 }

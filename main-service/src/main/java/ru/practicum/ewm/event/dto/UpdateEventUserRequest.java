@@ -2,10 +2,12 @@ package ru.practicum.ewm.event.dto;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@ToString
 public class UpdateEventUserRequest {
     String annotation;
     Long category;
