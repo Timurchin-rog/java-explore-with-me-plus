@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import ru.practicum.ewm.exception.api.EWMAptError;
@@ -49,6 +50,21 @@ public class EWMExceptionHandler {
             WrongTimeEventException.class
     })
     public ResponseEntity<EWMAptError> handleBadRequest(final RuntimeException ex) {
+        final EWMAptError error = new EWMAptError(
+                List.of(ex.getStackTrace()[0].toString()),
+                ex.getMessage(),
+                "Validation Error",
+                HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now().toString()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<EWMAptError> handleMethodArgumentNotValidException(final MethodArgumentNotValidException ex) {
         final EWMAptError error = new EWMAptError(
                 List.of(ex.getStackTrace()[0].toString()),
                 ex.getMessage(),
