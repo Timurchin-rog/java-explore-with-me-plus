@@ -27,18 +27,19 @@ public class UserServiceImpl implements UserService {
         QUser user = QUser.user;
         List<BooleanExpression> conditions = new ArrayList<>();
 
+        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
+        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
+
         if (param.getIds() != null) {
             for (Long paramId : param.getIds())
                 conditions.add(QUser.user.id.eq(paramId));
         } else
-            return UserMapper.mapToUserDto(userRepository.findAll());
+            return UserMapper.mapToUserDto(userRepository.findAll(page));
 
         BooleanExpression finalCondition = conditions.stream()
                 .reduce(BooleanExpression::and)
                 .get();
 
-        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
-        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
 
         return UserMapper.mapToUserDto(userRepository.findAll(finalCondition, page));
     }
