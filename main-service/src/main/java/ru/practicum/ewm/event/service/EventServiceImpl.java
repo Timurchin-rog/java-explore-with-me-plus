@@ -389,7 +389,8 @@ public class EventServiceImpl implements EventService {
     }
 
     private void validateEventDateForAdmin(LocalDateTime eventDate, String stateAction) {
-        if (stateAction != null && stateAction.equals("PUBLISH_EVENT") && eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
+        if (stateAction != null && stateAction.equals("PUBLISH_EVENT") &&
+                eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
             throw new ConflictException("Прошло более часа с момента публикации события");
         }
     }
@@ -410,7 +411,9 @@ public class EventServiceImpl implements EventService {
         LocalDateTime requestEventDate = LocalDateTime.parse(eventDateStr, formatter);
         Duration duration = Duration.between(LocalDateTime.now(), requestEventDate);
         Duration minDuration = duration.minusHours(2);
-        if (minDuration.isNegative() && !minDuration.isZero())
-            throw new WrongTimeEventException("Событие должно наступить минимум через 2 часа от момента добавления события");
+        if (minDuration.isNegative() && !minDuration.isZero()) {
+            throw new WrongTimeEventException(
+                    "Событие должно наступить минимум через 2 часа от момента добавления события");
+        }
     }
 }
