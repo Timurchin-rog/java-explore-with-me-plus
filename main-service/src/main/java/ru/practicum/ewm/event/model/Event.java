@@ -75,4 +75,11 @@ public class Event {
         this.title = title;
     }
 
+    public void increaseCountOfConfirmedRequest() {
+        this.confirmedRequests += 1;
+    }
+
+    public void decreaseCountOfConfirmedRequest() {
+        this.confirmedRequests -= 1;
+    }
 }

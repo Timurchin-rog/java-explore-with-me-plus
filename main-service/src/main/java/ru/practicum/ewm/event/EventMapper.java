@@ -152,7 +152,7 @@ public class EventMapper {
         }
     }
 
-    public static Event updateEventFields(Event event, UpdateEventUserRequest eventFromRequest) {
+    public static Event updatePrivateEventFields(Event event, UpdateEventUserRequest eventFromRequest) {
         if (eventFromRequest.hasAnnotation()) {
             event.setAnnotation(validateAnnotation(eventFromRequest.getAnnotation()));
         }
@@ -183,6 +183,47 @@ public class EventMapper {
             if (eventFromRequest.getStateAction().equalsIgnoreCase("SEND_TO_REVIEW"))
                 event.setState(EventState.PUBLISHED);
             else if (eventFromRequest.getStateAction().equalsIgnoreCase("CANCEL_REVIEW"))
+                event.setState(EventState.CANCELED);
+        }
+
+        if (eventFromRequest.hasTitle()) {
+            event.setTitle(validateTitle(eventFromRequest.getTitle()));
+        }
+
+        return event;
+    }
+
+    public static Event updateAdminEventFields(Event event, UpdateEventAdminRequest eventFromRequest) {
+        if (eventFromRequest.hasAnnotation()) {
+            event.setAnnotation(validateAnnotation(eventFromRequest.getAnnotation()));
+        }
+
+        if (eventFromRequest.hasDescription()) {
+            event.setDescription(validateDescription(eventFromRequest.getDescription()));
+        }
+
+        if (eventFromRequest.hasEventDate()) {
+            event.setEventDate(LocalDateTime.parse(eventFromRequest.getEventDate(), formatter));
+        }
+
+        if (eventFromRequest.hasPaid()) {
+            event.setPaid(eventFromRequest.getPaid());
+        }
+
+        if (eventFromRequest.hasParticipantLimit()) {
+            if (eventFromRequest.getParticipantLimit() < 0)
+                throw new ValidationException("Лимит участников не может быть отрицательным");
+            event.setParticipantLimit(eventFromRequest.getParticipantLimit());
+        }
+
+        if (eventFromRequest.hasRequestModeration()) {
+            event.setRequestModeration(eventFromRequest.getRequestModeration());
+        }
+
+        if (eventFromRequest.hasStateAction()) {
+            if (eventFromRequest.getStateAction().equalsIgnoreCase("PUBLISH_EVENT"))
+                event.setState(EventState.PUBLISHED);
+            else if (eventFromRequest.getStateAction().equalsIgnoreCase("REJECT_EVENT"))
                 event.setState(EventState.CANCELED);
         }
 

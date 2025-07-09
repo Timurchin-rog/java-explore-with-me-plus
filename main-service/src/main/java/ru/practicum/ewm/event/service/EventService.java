@@ -3,12 +3,10 @@ package ru.practicum.ewm.event.service;
 import ru.practicum.ewm.event.PrivateEventParam;
 import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.ewm.event.PrivateEventParam;
-import ru.practicum.ewm.event.dto.EventFilter;
-import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.*;
 
 import java.util.List;
-import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+
 import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
@@ -35,5 +33,5 @@ public interface EventService {
 
     Collection<EventFullDto> getAdminAllEvents(EventFilter filter);
 
-    EventFullDto updateByAdmin(Long eventId, UpdateEventUserRequest updateEvent);
+    EventFullDto updateByAdmin(Long eventId, UpdateEventAdminRequest updateEvent);
 }

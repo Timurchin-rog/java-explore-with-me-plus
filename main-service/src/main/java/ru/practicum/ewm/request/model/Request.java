@@ -31,6 +31,7 @@ public class Request {
     public Request(Event event, User requester) {
         this.event = event;
         this.requester = requester;
+        this.state = RequestState.PENDING;
         this.created = LocalDateTime.now();
     }
 }

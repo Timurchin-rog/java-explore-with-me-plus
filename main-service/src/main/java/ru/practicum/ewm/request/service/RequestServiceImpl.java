@@ -68,7 +68,7 @@ public class RequestServiceImpl implements RequestService {
         Request request = new Request(event, requester);
         if (!event.getRequestModeration()) {
             request.setState(RequestState.CONFIRMED);
-            event.setConfirmedRequests(+1L);
+            event.increaseCountOfConfirmedRequest();
             eventRepository.save(event);
         }
 
@@ -99,13 +99,18 @@ public class RequestServiceImpl implements RequestService {
         long userId = param.getUserId();
         if (userRepository.findById(userId).isEmpty())
                 throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
+
         long requestId = param.getRequestId();
-        Request request = requestRepository.findById(requestId).orElseThrow(
+        Request oldRequest = requestRepository.findById(requestId).orElseThrow(
                 () -> new NotFoundException(String.format("Запрос id = %d не найден", requestId))
         );
+        Event event = oldRequest.getEvent();
 
-        request.setState(RequestState.PENDING);
-        return RequestMapper.mapToRequestDto(request);
+        oldRequest.setState(RequestState.CANCELED);
+        event.decreaseCountOfConfirmedRequest();
+
+        Request updatedRequest = requestRepository.save(oldRequest);
+        return RequestMapper.mapToRequestDto(updatedRequest);
     }
 
 }

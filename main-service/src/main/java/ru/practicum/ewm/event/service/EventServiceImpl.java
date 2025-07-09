@@ -66,7 +66,7 @@ public class EventServiceImpl implements EventService {
     private final JPAQueryFactory queryFactory;
 
     private static String datePattern = "yyyy-MM-dd HH:mm:ss";
-    final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
 
     @Override
     public List<EventFullDto> getEventsOfUser(PrivateEventParam param) {
@@ -165,7 +165,7 @@ public class EventServiceImpl implements EventService {
         UpdateEventUserRequest eventFromRequest = param.getEventOnUpdate();
         if (eventFromRequest.getEventDate() != null)
             checkEventTime(eventFromRequest.getEventDate());
-        Event newEvent = EventMapper.updateEventFields(oldEvent, eventFromRequest);
+        Event newEvent = EventMapper.updatePrivateEventFields(oldEvent, eventFromRequest);
         eventRepository.save(newEvent);
         return EventMapper.mapToEventFullDto(newEvent);
     }
@@ -196,7 +196,10 @@ public class EventServiceImpl implements EventService {
                 () -> new NotFoundException(String.format("Событие id = %d не найдено", eventId))
         );
         EventRequestStatusUpdateRequest requestOnUpdateStatus = param.getRequest();
-        EventRequestStatusUpdateResult updatedRequests = EventRequestStatusUpdateResult.builder().build();
+        EventRequestStatusUpdateResult updatedRequests = EventRequestStatusUpdateResult.builder()
+                .confirmedRequests(new ArrayList<>())
+                .rejectedRequests(new ArrayList<>())
+                .build();
 
         if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
         && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
@@ -220,7 +223,7 @@ public class EventServiceImpl implements EventService {
             if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed")) {
                 request.setState(RequestState.CONFIRMED);
                 requestRepository.save(request);
-                event.setConfirmedRequests(+1L);
+                event.increaseCountOfConfirmedRequest();
                 eventRepository.save(event);
                 updatedRequests.addConfirmedRequest(RequestMapper.mapToRequestDto(request));
             } else if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("rejected")) {
@@ -231,69 +234,6 @@ public class EventServiceImpl implements EventService {
                 throw new ValidationException("Заявки можно только подтверждать или отклонять");
         }
         return updatedRequests;
-    }
-
-    @Override
-    public List<ParticipationRequestDto> getRequestsOfUser(PrivateEventParam param) {
-        QRequest qRequest = QRequest.request;
-        List<BooleanExpression> conditions = new ArrayList<>();
-
-        conditions.add(QRequest.request.requester.id.eq(param.getUserId()));
-        conditions.add(QRequest.request.event.id.eq(param.getEventId()));
-
-        BooleanExpression finalCondition = conditions.stream()
-                .reduce(BooleanExpression::and)
-                .get();
-
-        return RequestMapper.mapToRequestDto(requestRepository.findAll(finalCondition));
-    }
-
-    @Transactional
-    @Override
-    public EventRequestStatusUpdateResult updateStatusOfRequests(PrivateEventParam param) {
-        long userId = param.getUserId();
-        if (userRepository.findById(userId).isEmpty())
-                throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
-        long eventId = param.getEventId();
-        Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId).orElseThrow(
-                () -> new NotFoundException(String.format("Событие id = %d не найдено", eventId))
-        );
-        EventRequestStatusUpdateRequest requestOnUpdateStatus = param.getRequest();
-        EventRequestStatusUpdateResult updatedRequests = EventRequestStatusUpdateResult.builder().build();
-
-        if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
-        && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
-            return updatedRequests;
-        if (event.getConfirmedRequests() >= event.getParticipantLimit())
-            throw new ConflictException("Достигнут лимит запросов на участие в событии");
-
-        for (Long requestId : requestOnUpdateStatus.getRequestIds()) {
-            Request request = requestRepository.findById(requestId).orElseThrow(
-                    () -> new NotFoundException(String.format("Запрос id = %d не найден", requestId))
-            );
-
-            if (!request.getState().equals(RequestState.PENDING))
-                throw new ConflictException("Статус можно изменить только у заявок, находящихся в ожидании");
-
-            if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
-                request.setState(RequestState.REJECTED);
-                requestRepository.save(request);
-            }
-
-            if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed")) {
-                request.setState(RequestState.CONFIRMED);
-                requestRepository.save(request);
-                event.setConfirmedRequests(+1L);
-                eventRepository.save(event);
-                updatedRequests.addConfirmedRequest(RequestMapper.mapToRequestDto(request));
-            } else if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("rejected")) {
-                request.setState(RequestState.REJECTED);
-                requestRepository.save(request);
-                updatedRequests.addRejectedRequest(RequestMapper.mapToRequestDto(request));
-            } else
-                throw new ValidationException("Заявки можно только подтверждать или отклонять");
-        }
-    return updatedRequests;
     }
 
     @Override
@@ -384,7 +324,7 @@ public class EventServiceImpl implements EventService {
 
     @Transactional
     @Override
-    public EventFullDto updateByAdmin(Long eventId, UpdateEventUserRequest updateEvent){
+    public EventFullDto updateByAdmin(Long eventId, UpdateEventAdminRequest updateEvent){
         Event event = findEventById(eventId);
         log.info("событие что мы нашли {}", event);
         log.info("сам запрос на обновление {}", updateEvent);
@@ -396,7 +336,7 @@ public class EventServiceImpl implements EventService {
            log.info("сохранили новую локацию {}", newLocation);
            event.setLocation(newLocation);
         }
-        EventMapper.updateEventFields(event, updateEvent);
+        EventMapper.updateAdminEventFields(event, updateEvent);
         if (event.getState() != null && event.getState().equals(EventState.PUBLISHED)) {
             event.setPublishedOn(LocalDateTime.now());
         }
