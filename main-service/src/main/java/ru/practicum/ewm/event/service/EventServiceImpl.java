@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EventServiceImpl implements EventService {
+
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -100,10 +101,11 @@ public class EventServiceImpl implements EventService {
                             .filter(view -> view.getUri().contains(event.getId().toString()))
                             .map(ViewDto::getHits)
                             .findFirst();
-                    if (countViews.isEmpty())
+                    if (countViews.isEmpty()) {
                         event.setViews(0);
-                    else
+                    } else {
                         event.setViews(countViews.get());
+                    }
                 })
                 .toList();
 
@@ -126,10 +128,11 @@ public class EventServiceImpl implements EventService {
                 List.of(uri),
                 false);
 
-        if (views.isEmpty())
+        if (views.isEmpty()) {
             event.setViews(0);
-        else
+        } else {
             event.setViews(views.getFirst().getHits());
+        }
 
         return event;
     }
@@ -160,11 +163,13 @@ public class EventServiceImpl implements EventService {
         Event oldEvent = eventRepository.findByIdAndInitiator_Id(param.getEventId(), param.getUserId()).orElseThrow(
                 () -> new NotFoundException(String.format("Событие id = %d не найдено", param.getEventId()))
         );
-        if (oldEvent.getState().toString().equalsIgnoreCase("PUBLISHED"))
+        if (oldEvent.getState().toString().equalsIgnoreCase("PUBLISHED")) {
             throw new ConflictException("Событие в публикации не может быть изменено");
+        }
         UpdateEventUserRequest eventFromRequest = param.getEventOnUpdate();
-        if (eventFromRequest.getEventDate() != null)
+        if (eventFromRequest.getEventDate() != null) {
             checkEventTime(eventFromRequest.getEventDate());
+        }
         Event newEvent = EventMapper.updateEventFields(oldEvent, eventFromRequest);
         eventRepository.save(newEvent);
         return EventMapper.mapToEventFullDto(newEvent);
@@ -189,8 +194,9 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventRequestStatusUpdateResult updateStatusOfRequests(PrivateEventParam param) {
         long userId = param.getUserId();
-        if (userRepository.findById(userId).isEmpty())
-                throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
+        if (userRepository.findById(userId).isEmpty()) {
+            throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
+        }
         long eventId = param.getEventId();
         Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId).orElseThrow(
                 () -> new NotFoundException(String.format("Событие id = %d не найдено", eventId))
@@ -199,18 +205,21 @@ public class EventServiceImpl implements EventService {
         EventRequestStatusUpdateResult updatedRequests = EventRequestStatusUpdateResult.builder().build();
 
         if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
-        && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
+                && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed")) {
             return updatedRequests;
-        if (event.getConfirmedRequests() >= event.getParticipantLimit())
+        }
+        if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
             throw new ConflictException("Достигнут лимит запросов на участие в событии");
+        }
 
         for (Long requestId : requestOnUpdateStatus.getRequestIds()) {
             Request request = requestRepository.findById(requestId).orElseThrow(
                     () -> new NotFoundException(String.format("Запрос id = %d не найден", requestId))
             );
 
-            if (!request.getState().equals(RequestState.PENDING))
+            if (!request.getState().equals(RequestState.PENDING)) {
                 throw new ConflictException("Статус можно изменить только у заявок, находящихся в ожидании");
+            }
 
             if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
                 request.setState(RequestState.REJECTED);
@@ -227,73 +236,11 @@ public class EventServiceImpl implements EventService {
                 request.setState(RequestState.REJECTED);
                 requestRepository.save(request);
                 updatedRequests.addRejectedRequest(RequestMapper.mapToRequestDto(request));
-            } else
+            } else {
                 throw new ValidationException("Заявки можно только подтверждать или отклонять");
+            }
         }
         return updatedRequests;
-    }
-
-    @Override
-    public List<ParticipationRequestDto> getRequestsOfUser(PrivateEventParam param) {
-        QRequest qRequest = QRequest.request;
-        List<BooleanExpression> conditions = new ArrayList<>();
-
-        conditions.add(QRequest.request.requester.id.eq(param.getUserId()));
-        conditions.add(QRequest.request.event.id.eq(param.getEventId()));
-
-        BooleanExpression finalCondition = conditions.stream()
-                .reduce(BooleanExpression::and)
-                .get();
-
-        return RequestMapper.mapToRequestDto(requestRepository.findAll(finalCondition));
-    }
-
-    @Transactional
-    @Override
-    public EventRequestStatusUpdateResult updateStatusOfRequests(PrivateEventParam param) {
-        long userId = param.getUserId();
-        if (userRepository.findById(userId).isEmpty())
-                throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
-        long eventId = param.getEventId();
-        Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId).orElseThrow(
-                () -> new NotFoundException(String.format("Событие id = %d не найдено", eventId))
-        );
-        EventRequestStatusUpdateRequest requestOnUpdateStatus = param.getRequest();
-        EventRequestStatusUpdateResult updatedRequests = EventRequestStatusUpdateResult.builder().build();
-
-        if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
-        && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
-            return updatedRequests;
-        if (event.getConfirmedRequests() >= event.getParticipantLimit())
-            throw new ConflictException("Достигнут лимит запросов на участие в событии");
-
-        for (Long requestId : requestOnUpdateStatus.getRequestIds()) {
-            Request request = requestRepository.findById(requestId).orElseThrow(
-                    () -> new NotFoundException(String.format("Запрос id = %d не найден", requestId))
-            );
-
-            if (!request.getState().equals(RequestState.PENDING))
-                throw new ConflictException("Статус можно изменить только у заявок, находящихся в ожидании");
-
-            if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
-                request.setState(RequestState.REJECTED);
-                requestRepository.save(request);
-            }
-
-            if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed")) {
-                request.setState(RequestState.CONFIRMED);
-                requestRepository.save(request);
-                event.setConfirmedRequests(+1L);
-                eventRepository.save(event);
-                updatedRequests.addConfirmedRequest(RequestMapper.mapToRequestDto(request));
-            } else if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("rejected")) {
-                request.setState(RequestState.REJECTED);
-                requestRepository.save(request);
-                updatedRequests.addRejectedRequest(RequestMapper.mapToRequestDto(request));
-            } else
-                throw new ValidationException("Заявки можно только подтверждать или отклонять");
-        }
-    return updatedRequests;
     }
 
     @Override
@@ -384,7 +331,7 @@ public class EventServiceImpl implements EventService {
 
     @Transactional
     @Override
-    public EventFullDto updateByAdmin(Long eventId, UpdateEventUserRequest updateEvent){
+    public EventFullDto updateByAdmin(Long eventId, UpdateEventUserRequest updateEvent) {
         Event event = findEventById(eventId);
         log.info("событие что мы нашли {}", event);
         log.info("сам запрос на обновление {}", updateEvent);
@@ -392,9 +339,9 @@ public class EventServiceImpl implements EventService {
                 LocalDateTime.parse(updateEvent.getEventDate(), formatter), updateEvent.getStateAction());
         validateStatusForAdmin(event.getState(), updateEvent.getStateAction());
         if (updateEvent.getLocation() != null) {
-           Location newLocation = locationRepository.save(EventMapper.mapFromRequest(updateEvent.getLocation()));
-           log.info("сохранили новую локацию {}", newLocation);
-           event.setLocation(newLocation);
+            Location newLocation = locationRepository.save(EventMapper.mapFromRequest(updateEvent.getLocation()));
+            log.info("сохранили новую локацию {}", newLocation);
+            event.setLocation(newLocation);
         }
         EventMapper.updateEventFields(event, updateEvent);
         if (event.getState() != null && event.getState().equals(EventState.PUBLISHED)) {
@@ -449,7 +396,8 @@ public class EventServiceImpl implements EventService {
     }
 
     private void validateEventDateForAdmin(LocalDateTime eventDate, String stateAction) {
-        if (stateAction != null && stateAction.equals("PUBLISH_EVENT") && eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
+        if (stateAction != null && stateAction.equals("PUBLISH_EVENT") &&
+                eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
             throw new ConflictException("Прошло более часа с момента публикации события");
         }
     }
@@ -470,7 +418,9 @@ public class EventServiceImpl implements EventService {
         LocalDateTime requestEventDate = LocalDateTime.parse(eventDateStr, formatter);
         Duration duration = Duration.between(LocalDateTime.now(), requestEventDate);
         Duration minDuration = duration.minusHours(2);
-        if (minDuration.isNegative() && !minDuration.isZero())
-            throw new WrongTimeEventException("Событие должно наступить минимум через 2 часа от момента добавления события");
+        if (minDuration.isNegative() && !minDuration.isZero()) {
+            throw new WrongTimeEventException(
+                    "Событие должно наступить минимум через 2 часа от момента добавления события");
+        }
     }
 }
