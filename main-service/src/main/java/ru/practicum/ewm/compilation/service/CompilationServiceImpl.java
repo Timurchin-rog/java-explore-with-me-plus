@@ -38,7 +38,7 @@ public class CompilationServiceImpl implements CompilationService {
         QCompilation qCompilation = QCompilation.compilation;
         List<BooleanExpression> conditions = new ArrayList<>();
 
-        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
+        Sort sortById = Sort.by("id").ascending();
         Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
 
         if (param.getPinned() != null) {

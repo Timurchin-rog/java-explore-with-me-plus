@@ -16,7 +16,7 @@ public class PublicCompilationController {
     private final CompilationService compilationService;
 
     @GetMapping
-    public Set<CompilationDto> getCompilations(@RequestParam(required = false) boolean pinned,
+    public Set<CompilationDto> getCompilations(@RequestParam(required = false) Boolean pinned,
                                                @RequestParam(defaultValue = "0") int from,
                                                @RequestParam(defaultValue = "10") int size) {
         PublicCompilationParam param = PublicCompilationParam.builder()

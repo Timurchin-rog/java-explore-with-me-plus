@@ -175,7 +175,7 @@ public class EventServiceImpl implements EventService {
         QRequest qRequest = QRequest.request;
         List<BooleanExpression> conditions = new ArrayList<>();
 
-        conditions.add(QRequest.request.requester.id.eq(param.getUserId()));
+        conditions.add(QRequest.request.event.initiator.id.eq(param.getUserId()));
         conditions.add(QRequest.request.event.id.eq(param.getEventId()));
 
         BooleanExpression finalCondition = conditions.stream()

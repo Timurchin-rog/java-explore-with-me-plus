@@ -13,6 +13,7 @@ import java.util.Set;
 @Entity
 @Table(name = "compilations")
 @Data
+@EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Compilation {
