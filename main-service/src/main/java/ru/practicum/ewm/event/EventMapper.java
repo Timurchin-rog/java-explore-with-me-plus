@@ -165,10 +165,6 @@ public class EventMapper {
             event.setEventDate(LocalDateTime.parse(eventFromRequest.getEventDate(), formatter));
         }
 
-        if (eventFromRequest.hasLocation()) {
-            event.setLocation(mapFromRequest(eventFromRequest.getLocation()));
-        }
-
         if (eventFromRequest.hasPaid()) {
             event.setPaid(eventFromRequest.getPaid());
         }

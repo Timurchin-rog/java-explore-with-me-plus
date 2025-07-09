@@ -5,6 +5,7 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -51,6 +52,7 @@ import java.util.Optional;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -296,6 +298,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Collection<EventShortDto> getPublicAllEvents(EventFilter filter, HttpServletRequest request) {
+        log.info("параметры для фильтрации {}", filter);
+        log.info("все события что есть в бд {}", eventRepository.findAll());
         checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
         saveView(request);
         List<Event> events;
@@ -313,11 +317,13 @@ public class EventServiceImpl implements EventService {
         if (filter.getOnlyAvailable()) {
             exp = exp.and(event.participantLimit.gt(event.confirmedRequests));
         }
+        log.info("sql запрос к бд {}", exp);
         JPAQuery<Event> query = queryFactory.selectFrom(event)
                 .where(exp)
                 .offset(filter.getFrom())
                 .limit(filter.getSize());
         events = query.fetch();
+        log.info("события получаемы из бд после фильтрации {}", events);
         return events.stream()
                 .map(event1 -> {
                     EventShortDto eventShortDto = EventMapper.mapToEventShortDto(event1);
@@ -331,6 +337,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Collection<EventFullDto> getAdminAllEvents(EventFilter filter) {
+        log.debug("параметры для фильтрации {}", filter);
+        log.debug("все события что есть в бд {}", eventRepository.findAll());
         checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
         List<Event> events;
         QEvent event = QEvent.event;
@@ -343,11 +351,13 @@ public class EventServiceImpl implements EventService {
         exp = exp.and(event.category.id.in(filter.getCategories()));
         exp = exp.and(event.eventDate.after(filter.getRangeStart()));
         exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
+        log.debug("sql запрос к бд {}", exp);
         JPAQuery<Event> query = queryFactory.selectFrom(event)
                 .where(exp)
                 .offset(filter.getFrom())
                 .limit(filter.getSize());
         events = query.fetch();
+        log.debug("события получаемы из бд после фильтрации {}", events);
         return events.stream()
                 .map(event1 -> {
                     EventFullDto eventFullDto = EventMapper.mapToEventFullDto(event1);
@@ -376,18 +386,24 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto updateByAdmin(Long eventId, UpdateEventUserRequest updateEvent){
         Event event = findEventById(eventId);
-
+        log.info("событие что мы нашли {}", event);
+        log.info("сам запрос на обновление {}", updateEvent);
         validateEventDateForAdmin(updateEvent.getEventDate() == null ? event.getEventDate() :
                 LocalDateTime.parse(updateEvent.getEventDate(), formatter), updateEvent.getStateAction());
         validateStatusForAdmin(event.getState(), updateEvent.getStateAction());
-        locationRepository.save(EventMapper.mapFromRequest(updateEvent.getLocation()));
+        if (updateEvent.getLocation() != null) {
+           Location newLocation = locationRepository.save(EventMapper.mapFromRequest(updateEvent.getLocation()));
+           log.info("сохранили новую локацию {}", newLocation);
+           event.setLocation(newLocation);
+        }
         EventMapper.updateEventFields(event, updateEvent);
         if (event.getState() != null && event.getState().equals(EventState.PUBLISHED)) {
             event.setPublishedOn(LocalDateTime.now());
         }
-        Event newEvent = eventRepository.save(event);
-        EventFullDto eventFullDto = EventMapper.mapToEventFullDto(newEvent);
-        eventFullDto.setViews(countView(newEvent.getId(), newEvent.getCreatedOn(), LocalDateTime.now()));
+        eventRepository.save(event);
+        log.info("обновленное событие {}", event);
+        EventFullDto eventFullDto = EventMapper.mapToEventFullDto(event);
+        eventFullDto.setViews(countView(event.getId(), event.getCreatedOn(), LocalDateTime.now()));
         return eventFullDto;
     }
 
