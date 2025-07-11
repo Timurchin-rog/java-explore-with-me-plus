@@ -253,10 +253,18 @@ public class EventServiceImpl implements EventService {
             exp = exp.and(event.description.containsIgnoreCase(filter.getText()))
                     .or(event.annotation.containsIgnoreCase(filter.getText()));
         }
-        exp = exp.and(event.category.id.in(filter.getCategories()));
-        exp = exp.and(event.paid.eq(filter.getPaid()));
-        exp = exp.and(event.eventDate.after(filter.getRangeStart()));
-        exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
+        if(filter.getCategories() != null){
+            exp = exp.and(event.category.id.in(filter.getCategories()));
+        }
+        if(filter.getPaid() != null) {
+            exp = exp.and(event.paid.eq(filter.getPaid()));
+        }
+        if(filter.getRangeStart() != null) {
+            exp = exp.and(event.eventDate.after(filter.getRangeStart()));
+        }
+        if(filter.getRangeEnd() != null) {
+            exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
+        }
         if (filter.getOnlyAvailable()) {
             exp = exp.and(event.participantLimit.gt(event.confirmedRequests));
         }
