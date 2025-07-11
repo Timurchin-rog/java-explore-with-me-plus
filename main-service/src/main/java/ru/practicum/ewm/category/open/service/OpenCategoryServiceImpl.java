@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryMapper;
@@ -23,7 +24,8 @@ public class OpenCategoryServiceImpl implements OpenCategoryService {
 
     @Override
     public Collection<CategoryDto> getCategories(int from, int size) {
-        Pageable page = PageRequest.of(from, size);
+        Sort sortById = Sort.by("id").ascending();
+        Pageable page = PageRequest.of(from, size, sortById);
         List<Category> categories = repository.findAll(page).getContent();
         if (categories.isEmpty()) {
             return List.of();
