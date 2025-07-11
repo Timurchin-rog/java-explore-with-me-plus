@@ -87,35 +87,15 @@ public class EventMapper {
 
     public static Event mapFromRequest(NewEventDto event) {
         return new Event(
-                validateAnnotation(event.getAnnotation()),
-                validateDescription(event.getDescription()),
+                event.getAnnotation(),
+                event.getDescription(),
                 LocalDateTime.parse(event.getEventDate(), formatter),
                 mapFromRequest(event.getLocation()),
                 validatePaid(event.getPaid()),
                 validateParticipantLimit(event.getParticipantLimit()),
                 validateRequestModeration(event.getRequestModeration()),
-                validateTitle(event.getTitle())
+                event.getTitle()
         );
-    }
-
-    private static String validateAnnotation(String annotation) {
-        if (annotation.length() < 20) {
-            throw new ValidationException("Аннотация к событию не может быть меньше 20 символов");
-        } else if (annotation.length() > 2000) {
-            throw new ValidationException("Аннотация к событию не может быть больше 2000 символов");
-        } else {
-            return annotation;
-        }
-    }
-
-    private static String validateDescription(String description) {
-        if (description.length() < 20) {
-            throw new ValidationException("Описание к событию не может быть меньше 20 символов");
-        } else if (description.length() > 7000) {
-            throw new ValidationException("Описание к событию не может быть больше 7000 символов");
-        } else {
-            return description;
-        }
     }
 
     private static Boolean validatePaid(Boolean paid) {
@@ -142,23 +122,13 @@ public class EventMapper {
         return requestModeration;
     }
 
-    private static String validateTitle(String title) {
-        if (title.length() < 3) {
-            throw new ValidationException("Название события не может быть меньше 3 символов");
-        } else if (title.length() > 120) {
-            throw new ValidationException("Название события не может быть больше 120 символов");
-        } else {
-            return title;
-        }
-    }
-
     public static Event updatePrivateEventFields(Event event, UpdateEventUserRequest eventFromRequest) {
         if (eventFromRequest.hasAnnotation()) {
-            event.setAnnotation(validateAnnotation(eventFromRequest.getAnnotation()));
+            event.setAnnotation(eventFromRequest.getAnnotation());
         }
 
         if (eventFromRequest.hasDescription()) {
-            event.setDescription(validateDescription(eventFromRequest.getDescription()));
+            event.setDescription(eventFromRequest.getDescription());
         }
 
         if (eventFromRequest.hasEventDate()) {
@@ -187,7 +157,7 @@ public class EventMapper {
         }
 
         if (eventFromRequest.hasTitle()) {
-            event.setTitle(validateTitle(eventFromRequest.getTitle()));
+            event.setTitle(eventFromRequest.getTitle());
         }
 
         return event;
@@ -195,11 +165,11 @@ public class EventMapper {
 
     public static Event updateAdminEventFields(Event event, UpdateEventAdminRequest eventFromRequest) {
         if (eventFromRequest.hasAnnotation()) {
-            event.setAnnotation(validateAnnotation(eventFromRequest.getAnnotation()));
+            event.setAnnotation(eventFromRequest.getAnnotation());
         }
 
         if (eventFromRequest.hasDescription()) {
-            event.setDescription(validateDescription(eventFromRequest.getDescription()));
+            event.setDescription(eventFromRequest.getDescription());
         }
 
         if (eventFromRequest.hasEventDate()) {
@@ -228,7 +198,7 @@ public class EventMapper {
         }
 
         if (eventFromRequest.hasTitle()) {
-            event.setTitle(validateTitle(eventFromRequest.getTitle()));
+            event.setTitle(eventFromRequest.getTitle());
         }
 
         return event;

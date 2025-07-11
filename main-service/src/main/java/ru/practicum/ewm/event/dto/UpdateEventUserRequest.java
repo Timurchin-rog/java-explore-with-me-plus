@@ -1,5 +1,8 @@
 package ru.practicum.ewm.event.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.ToString;
@@ -9,15 +12,32 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ToString
 public class UpdateEventUserRequest {
+
+    @NotBlank(message = "Аннотация не может быть пустой")
+    @Size(min = 20, max = 2000, message = "Аннотация к событию не может быть меньше 20 и больше 2000 символов")
     String annotation;
+
     Long category;
+
+    @NotBlank(message = "Описание не может быть пустым")
+    @Size(min = 20, max = 7000, message = "Описание к событию не может быть меньше 20 и больше 7000 символов")
     String description;
+
     String eventDate;
+
     NewLocationDto location;
+
     Boolean paid;
+
+    @Positive
     Long participantLimit;
+
     Boolean requestModeration;
+
     String stateAction;
+
+    @NotBlank(message = "Название не может быть пустым")
+    @Size(min = 3, max = 120, message = "Название не может быть меньше 3 и больше 120 символов")
     String title;
 
     public boolean hasAnnotation() {

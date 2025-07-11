@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.controller;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
-import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.service.EventService;
 
 import java.time.LocalDateTime;
@@ -46,7 +46,7 @@ public class AdminEventController {
     }
 
     @PatchMapping("/{eventId}")
-    public EventFullDto updateByAdmin(@PathVariable Long eventId, @RequestBody UpdateEventAdminRequest updateEvent){
+    public EventFullDto updateByAdmin(@PathVariable Long eventId, @Valid @RequestBody UpdateEventAdminRequest updateEvent){
         return eventService.updateByAdmin(eventId, updateEvent);
     }
 }

@@ -59,7 +59,7 @@ public class PrivateEventController {
     }
 
     @PatchMapping(eventPath)
-    public EventFullDto updateEvent(@RequestBody UpdateEventUserRequest event,
+    public EventFullDto updateEvent(@Valid @RequestBody UpdateEventUserRequest event,
                                     @PathVariable(name = "user-id") long userId,
                                     @PathVariable(name = "event-id") long eventId) {
         PrivateEventParam param = PrivateEventParam.builder()
