@@ -98,7 +98,7 @@ public class RequestServiceImpl implements RequestService {
     public ParticipationRequestDto updateRequest(PrivateRequestParam param) {
         long userId = param.getUserId();
         if (userRepository.findById(userId).isEmpty())
-                throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
+            throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
 
         long requestId = param.getRequestId();
         Request oldRequest = requestRepository.findById(requestId).orElseThrow(

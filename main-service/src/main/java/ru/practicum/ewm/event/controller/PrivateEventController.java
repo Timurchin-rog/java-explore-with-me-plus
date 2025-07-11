@@ -53,7 +53,7 @@ public class PrivateEventController {
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto createEvent(@Valid @RequestBody NewEventDto event,
                                     @PathVariable(name = "user-id") long userId) {
-        log.info("получаем запрос на создание события");
+        log.debug("получаем запрос на создание события");
         PrivateEventParam param = PrivateEventParam.builder()
                 .newEvent(event)
                 .userId(userId)
@@ -75,7 +75,7 @@ public class PrivateEventController {
 
     @GetMapping(requestsPath)
     public List<ParticipationRequestDto> getRequestsOfUser(@PathVariable(name = "user-id") long userId,
-                                                     @PathVariable(name = "event-id") long eventId) {
+                                                           @PathVariable(name = "event-id") long eventId) {
         PrivateEventParam param = PrivateEventParam.builder()
                 .userId(userId)
                 .eventId(eventId)

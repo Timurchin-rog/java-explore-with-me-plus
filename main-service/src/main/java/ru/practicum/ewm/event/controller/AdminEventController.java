@@ -32,7 +32,7 @@ public class AdminEventController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @Future LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-            @RequestParam(defaultValue = "10") @Positive Integer size){
+            @RequestParam(defaultValue = "10") @Positive Integer size) {
         EventFilter eventFilter = EventFilter.builder()
                 .users(users)
                 .states(states)
@@ -46,7 +46,7 @@ public class AdminEventController {
     }
 
     @PatchMapping("/{eventId}")
-    public EventFullDto updateByAdmin(@PathVariable Long eventId, @Valid @RequestBody UpdateEventAdminRequest updateEvent){
+    public EventFullDto updateByAdmin(@PathVariable Long eventId, @Valid @RequestBody UpdateEventAdminRequest updateEvent) {
         return eventService.updateByAdmin(eventId, updateEvent);
     }
 }

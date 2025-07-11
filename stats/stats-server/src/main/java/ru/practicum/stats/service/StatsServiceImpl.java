@@ -2,6 +2,7 @@ package ru.practicum.stats.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.HitDto;
@@ -24,6 +25,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class StatsServiceImpl implements StatsService {
 
     private final HitRepository hitRepository;
@@ -38,12 +40,13 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<ViewDto> getViews(StatsParam param) {
+        log.debug("параметры для получения количества просмотров {}", param);
         QHit qHit = QHit.hit;
         List<BooleanExpression> conditions = new ArrayList<>();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
-        LocalDateTime start = LocalDateTime.parse(param.getStart(), formatter);
-        LocalDateTime end = LocalDateTime.parse(param.getEnd(), formatter);
+        LocalDateTime start = LocalDateTime.parse(param.getStart(), formatter).minusSeconds(1);
+        LocalDateTime end = LocalDateTime.parse(param.getEnd(), formatter).plusSeconds(1);
 
         conditions.add(QHit.hit.timestamp.between(start, end));
 
@@ -57,6 +60,7 @@ public class StatsServiceImpl implements StatsService {
                 .get();
 
         Iterable<Hit> hitsFromRep = hitRepository.findAll(finalCondition);
+        log.debug("что получаем из базы? {}", hitsFromRep);
         List<Hit> hits = new ArrayList<>();
 
         for (Hit hit : hitsFromRep)
@@ -78,6 +82,8 @@ public class StatsServiceImpl implements StatsService {
                 })
                 .sorted(Comparator.comparing(View::getHits).reversed())
                 .toList();
+        log.debug("просмотры которые возвращаем из статистки по фильтру {}", views);
+        log.debug("все просмотры что есть {}", hitRepository.findAll());
         return ViewMapper.mapToViewDto(views);
     }
 }

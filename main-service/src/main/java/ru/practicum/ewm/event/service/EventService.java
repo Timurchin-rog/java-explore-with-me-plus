@@ -2,7 +2,6 @@ package ru.practicum.ewm.event.service;
 
 import ru.practicum.ewm.event.PrivateEventParam;
 import jakarta.servlet.http.HttpServletRequest;
-import ru.practicum.ewm.event.PrivateEventParam;
 import ru.practicum.ewm.event.dto.*;
 
 import java.util.List;
@@ -11,7 +10,6 @@ import ru.practicum.ewm.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
 import java.util.Collection;
-import java.util.List;
 
 public interface EventService {
 

@@ -1,6 +1,7 @@
 package ru.practicum.ewm.event.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -137,7 +138,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     @Override
     public EventFullDto createEvent(PrivateEventParam param) {
-        log.info("получили параметры для создания события {}", param);
+        log.debug("получили параметры для создания события {}", param);
         NewEventDto eventFromRequest = param.getNewEvent();
         User user = userRepository.findById(param.getUserId()).orElseThrow(
                 () -> new NotFoundException(String.format("Пользователь id = %d не найден", param.getUserId()))
@@ -152,8 +153,8 @@ public class EventServiceImpl implements EventService {
         newEvent.setCategory(category);
         newEvent.setInitiator(user);
         newEvent.setLocation(location);
-        log.info("имеем новое событие перед маппером {}", newEvent);
-        log.info("выгружаем все события из базы {}", eventRepository.findAll());
+        log.debug("имеем новое событие перед маппером {}", newEvent);
+        log.debug("выгружаем все события из базы {}", eventRepository.findAll());
         return EventMapper.mapToEventFullDto(newEvent);
     }
 
@@ -193,7 +194,7 @@ public class EventServiceImpl implements EventService {
     public EventRequestStatusUpdateResult updateStatusOfRequests(PrivateEventParam param) {
         long userId = param.getUserId();
         if (userRepository.findById(userId).isEmpty())
-                throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
+            throw new NotFoundException(String.format("Пользователь id = %d не найден", userId));
         long eventId = param.getEventId();
         Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId).orElseThrow(
                 () -> new NotFoundException(String.format("Событие id = %d не найдено", eventId))
@@ -205,7 +206,7 @@ public class EventServiceImpl implements EventService {
                 .build();
 
         if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
-        && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
+                && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
             return updatedRequests;
         if (event.getConfirmedRequests() >= event.getParticipantLimit())
             throw new ConflictException("Достигнут лимит запросов на участие в событии");
@@ -241,8 +242,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Collection<EventShortDto> getPublicAllEvents(EventFilter filter, HttpServletRequest request) {
-        log.info("параметры для фильтрации {}", filter);
-        log.info("все события что есть в бд {}", eventRepository.findAll());
+        log.debug("параметры для фильтрации {}", filter);
+        log.debug("все события что есть в бд {}", eventRepository.findAll());
         checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
         saveView(request);
         List<Event> events;
@@ -253,62 +254,72 @@ public class EventServiceImpl implements EventService {
             exp = exp.and(event.description.containsIgnoreCase(filter.getText()))
                     .or(event.annotation.containsIgnoreCase(filter.getText()));
         }
-        if(filter.getCategories() != null){
+        if (filter.getCategories() != null) {
             exp = exp.and(event.category.id.in(filter.getCategories()));
         }
-        if(filter.getPaid() != null) {
+        if (filter.getPaid() != null) {
             exp = exp.and(event.paid.eq(filter.getPaid()));
         }
-        if(filter.getRangeStart() != null) {
+        if (filter.getRangeStart() != null) {
             exp = exp.and(event.eventDate.after(filter.getRangeStart()));
         }
-        if(filter.getRangeEnd() != null) {
+        if (filter.getRangeEnd() != null) {
             exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
         }
         if (filter.getOnlyAvailable()) {
             exp = exp.and(event.participantLimit.gt(event.confirmedRequests));
         }
-        log.info("sql запрос к бд {}", exp);
+        log.debug("sql запрос к бд {}", exp);
         JPAQuery<Event> query = queryFactory.selectFrom(event)
                 .where(exp)
                 .offset(filter.getFrom())
                 .limit(filter.getSize());
         events = query.fetch();
-        log.info("события получаемы из бд после фильтрации {}", events);
+        log.debug("события получаемы из бд после фильтрации {}", events);
         return events.stream()
                 .map(event1 -> {
                     EventShortDto eventShortDto = EventMapper.mapToEventShortDto(event1);
                     eventShortDto.setViews(countView(event1.getId(), event1.getCreatedOn(), LocalDateTime.now()));
                     return eventShortDto;
                 })
-                .sorted((e1, e2) -> filter.getSort().equals("EVENT_DATE") ?
+                .sorted((e1, e2) -> filter.getSort() == null || filter.getSort().equals("EVENT_DATE") ?
                         e1.getEventDate().compareTo(e2.getEventDate()) : e1.getViews().compareTo(e2.getViews()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override
     public Collection<EventFullDto> getAdminAllEvents(EventFilter filter) {
-        log.info("параметры для фильтрации {}", filter);
-        log.info("все события что есть в бд {}", eventRepository.findAll());
+        log.debug("параметры для фильтрации {}", filter);
+        log.debug("все события что есть в бд {}", eventRepository.findAll());
         checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
         List<Event> events;
         QEvent event = QEvent.event;
-        BooleanExpression exp;
-        List<EventState> eventStates = filter.getStates().stream()
-                .map(EventState::valueOf)
-                .toList();
-        exp = event.state.in(eventStates);
-        exp = exp.and(event.initiator.id.in(filter.getUsers()));
-        exp = exp.and(event.category.id.in(filter.getCategories()));
-        exp = exp.and(event.eventDate.after(filter.getRangeStart()));
-        exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
-        log.info("sql запрос к бд {}", exp);
+        BooleanExpression exp = Expressions.asBoolean(true).isTrue();
+        if (filter.getStates() != null) {
+            List<EventState> eventStates = filter.getStates().stream()
+                    .map(EventState::valueOf)
+                    .toList();
+            exp = event.state.in(eventStates);
+        }
+        if (filter.getUsers() != null) {
+            exp = exp.and(event.initiator.id.in(filter.getUsers()));
+        }
+        if (filter.getCategories() != null) {
+            exp = exp.and(event.category.id.in(filter.getCategories()));
+        }
+        if (filter.getRangeStart() != null) {
+            exp = exp.and(event.eventDate.after(filter.getRangeStart()));
+        }
+        if (filter.getRangeEnd() != null) {
+            exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
+        }
+        log.debug("sql запрос к бд {}", exp);
         JPAQuery<Event> query = queryFactory.selectFrom(event)
                 .where(exp)
                 .offset(filter.getFrom())
                 .limit(filter.getSize());
         events = query.fetch();
-        log.info("события получаемы из бд после фильтрации {}", events);
+        log.debug("события получаемы из бд после фильтрации {}", events);
         return events.stream()
                 .map(event1 -> {
                     EventFullDto eventFullDto = EventMapper.mapToEventFullDto(event1);
@@ -327,7 +338,6 @@ public class EventServiceImpl implements EventService {
         } else {
             saveView(request);
         }
-
         final EventFullDto eventDto = EventMapper.mapToEventFullDto(event);
         eventDto.setViews(countView(event.getId(), event.getCreatedOn(), LocalDateTime.now()));
         return eventDto;
@@ -335,24 +345,24 @@ public class EventServiceImpl implements EventService {
 
     @Transactional
     @Override
-    public EventFullDto updateByAdmin(Long eventId, UpdateEventAdminRequest updateEvent){
+    public EventFullDto updateByAdmin(Long eventId, UpdateEventAdminRequest updateEvent) {
         Event event = findEventById(eventId);
-        log.info("событие что мы нашли {}", event);
-        log.info("сам запрос на обновление {}", updateEvent);
+        log.debug("событие что мы нашли {}", event);
+        log.debug("сам запрос на обновление {}", updateEvent);
         validateEventDateForAdmin(updateEvent.getEventDate() == null ? event.getEventDate() :
                 LocalDateTime.parse(updateEvent.getEventDate(), formatter), updateEvent.getStateAction());
         validateStatusForAdmin(event.getState(), updateEvent.getStateAction());
         if (updateEvent.getLocation() != null) {
-           Location newLocation = locationRepository.save(EventMapper.mapFromRequest(updateEvent.getLocation()));
-           log.info("сохранили новую локацию {}", newLocation);
-           event.setLocation(newLocation);
+            Location newLocation = locationRepository.save(EventMapper.mapFromRequest(updateEvent.getLocation()));
+            log.debug("сохранили новую локацию {}", newLocation);
+            event.setLocation(newLocation);
         }
         EventMapper.updateAdminEventFields(event, updateEvent);
         if (event.getState() != null && event.getState().equals(EventState.PUBLISHED)) {
             event.setPublishedOn(LocalDateTime.now());
         }
         eventRepository.save(event);
-        log.info("обновленное событие {}", event);
+        log.debug("обновленное событие {}", event);
         EventFullDto eventFullDto = EventMapper.mapToEventFullDto(event);
         eventFullDto.setViews(countView(event.getId(), event.getCreatedOn(), LocalDateTime.now()));
         return eventFullDto;
@@ -391,7 +401,7 @@ public class EventServiceImpl implements EventService {
 
     private Integer countView(Long eventId, LocalDateTime start, LocalDateTime end) {
         List<String> uris = List.of("/events/" + eventId);
-        List<ViewDto> views = statsClient.getStats(start.format(formatter), end.format(formatter), uris, false);
+        List<ViewDto> views = statsClient.getStats(start.format(formatter), end.format(formatter), uris, true);
         Optional<Integer> countViews = views.stream()
                 .filter(view -> view.getUri().contains(eventId.toString()))
                 .map(ViewDto::getHits)
@@ -403,6 +413,9 @@ public class EventServiceImpl implements EventService {
         if (stateAction != null && stateAction.equals("PUBLISH_EVENT") &&
                 eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
             throw new ConflictException("Прошло более часа с момента публикации события");
+        }
+        if (eventDate.isBefore(LocalDateTime.now())) {
+            throw new ValidationException("Дата события не может быть в прошлом");
         }
     }
 

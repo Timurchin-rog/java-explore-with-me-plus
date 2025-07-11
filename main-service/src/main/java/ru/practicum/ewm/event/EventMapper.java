@@ -61,7 +61,7 @@ public class EventMapper {
                 .build();
     }
 
-    public static HashSet<EventShortDto> mapToEventShortDto (Iterable<Event> events) {
+    public static HashSet<EventShortDto> mapToEventShortDto(Iterable<Event> events) {
         HashSet<EventShortDto> eventsResult = new HashSet<>();
 
         for (Event event : events) {
