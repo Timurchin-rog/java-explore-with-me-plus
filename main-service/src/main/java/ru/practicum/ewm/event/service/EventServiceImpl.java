@@ -137,6 +137,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     @Override
     public EventFullDto createEvent(PrivateEventParam param) {
+        log.info("получили параметры для создания события {}", param);
         NewEventDto eventFromRequest = param.getNewEvent();
         User user = userRepository.findById(param.getUserId()).orElseThrow(
                 () -> new NotFoundException(String.format("Пользователь id = %d не найден", param.getUserId()))
@@ -151,6 +152,8 @@ public class EventServiceImpl implements EventService {
         newEvent.setCategory(category);
         newEvent.setInitiator(user);
         newEvent.setLocation(location);
+        log.info("имеем новое событие перед маппером {}", newEvent);
+        log.info("выгружаем все события из базы {}", eventRepository.findAll());
         return EventMapper.mapToEventFullDto(newEvent);
     }
 
@@ -277,8 +280,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Collection<EventFullDto> getAdminAllEvents(EventFilter filter) {
-        log.debug("параметры для фильтрации {}", filter);
-        log.debug("все события что есть в бд {}", eventRepository.findAll());
+        log.info("параметры для фильтрации {}", filter);
+        log.info("все события что есть в бд {}", eventRepository.findAll());
         checkFilterDateRangeIsGood(filter.getRangeStart(), filter.getRangeEnd());
         List<Event> events;
         QEvent event = QEvent.event;
@@ -291,13 +294,13 @@ public class EventServiceImpl implements EventService {
         exp = exp.and(event.category.id.in(filter.getCategories()));
         exp = exp.and(event.eventDate.after(filter.getRangeStart()));
         exp = exp.and(event.eventDate.before(filter.getRangeEnd()));
-        log.debug("sql запрос к бд {}", exp);
+        log.info("sql запрос к бд {}", exp);
         JPAQuery<Event> query = queryFactory.selectFrom(event)
                 .where(exp)
                 .offset(filter.getFrom())
                 .limit(filter.getSize());
         events = query.fetch();
-        log.debug("события получаемы из бд после фильтрации {}", events);
+        log.info("события получаемы из бд после фильтрации {}", events);
         return events.stream()
                 .map(event1 -> {
                     EventFullDto eventFullDto = EventMapper.mapToEventFullDto(event1);

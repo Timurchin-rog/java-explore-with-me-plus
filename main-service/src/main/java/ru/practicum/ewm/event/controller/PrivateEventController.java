@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.PrivateEventParam;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/users")
 @RequiredArgsConstructor
+@Slf4j
 public class PrivateEventController {
 
     private final EventService eventService;
@@ -51,6 +53,7 @@ public class PrivateEventController {
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto createEvent(@Valid @RequestBody NewEventDto event,
                                     @PathVariable(name = "user-id") long userId) {
+        log.info("получаем запрос на создание события");
         PrivateEventParam param = PrivateEventParam.builder()
                 .newEvent(event)
                 .userId(userId)
