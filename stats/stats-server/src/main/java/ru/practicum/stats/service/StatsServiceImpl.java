@@ -1,5 +1,6 @@
 package ru.practicum.stats.service;
 
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,10 @@ public class StatsServiceImpl implements StatsService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
         LocalDateTime start = LocalDateTime.parse(param.getStart(), formatter);
         LocalDateTime end = LocalDateTime.parse(param.getEnd(), formatter);
+
+        if (start.isAfter(end))
+            throw new ValidationException("Дата начала не может быть позже даты конца диапазона");
+
         List<Hit> hits;
         List<String> uris = param.getUris();
         boolean isUnique = param.isUnique();
