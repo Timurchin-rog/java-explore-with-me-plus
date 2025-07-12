@@ -11,7 +11,6 @@ import ru.practicum.ewm.user.UserMapper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 public class EventMapper {
@@ -61,8 +60,8 @@ public class EventMapper {
                 .build();
     }
 
-    public static HashSet<EventShortDto> mapToEventShortDto(Iterable<Event> events) {
-        HashSet<EventShortDto> eventsResult = new HashSet<>();
+    public static List<EventShortDto> mapToEventShortDto(Iterable<Event> events) {
+        List<EventShortDto> eventsResult = new ArrayList<>();
 
         for (Event event : events) {
             eventsResult.add(mapToEventShortDto(event));
@@ -150,8 +149,9 @@ public class EventMapper {
         }
 
         if (eventFromRequest.hasStateAction()) {
-            if (eventFromRequest.getStateAction().equalsIgnoreCase("SEND_TO_REVIEW"))
-                event.setState(EventState.PUBLISHED);
+            if (eventFromRequest.getStateAction().equalsIgnoreCase("SEND_TO_REVIEW")
+            && event.getState().equals(EventState.CANCELED))
+                event.setState(EventState.PENDING);
             else if (eventFromRequest.getStateAction().equalsIgnoreCase("CANCEL_REVIEW"))
                 event.setState(EventState.CANCELED);
         }

@@ -7,8 +7,9 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.event.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public class CompilationMapper {
 
@@ -21,17 +22,19 @@ public class CompilationMapper {
                 .build();
     }
 
-    public static Set<CompilationDto> mapToCompilationDto(Iterable<Compilation> compilations) {
-        Set<CompilationDto> compilationsResult = new HashSet<>();
+    public static List<CompilationDto> mapToCompilationDto(Iterable<Compilation> compilations) {
+        List<CompilationDto> compilationsResult = new ArrayList<>();
 
         for (Compilation compilation : compilations) {
             compilationsResult.add(mapToCompilationDto(compilation));
         }
 
-        return compilationsResult;
+        return compilationsResult.stream()
+                .sorted(Comparator.comparing(CompilationDto::getId))
+                .toList();
     }
 
-    public static Compilation mapFromRequest(NewCompilationDto compilation, Set<Event> events) {
+    public static Compilation mapFromRequest(NewCompilationDto compilation, List<Event> events) {
         return new Compilation(
                 events,
                 validatePinned(compilation.getPinned()),

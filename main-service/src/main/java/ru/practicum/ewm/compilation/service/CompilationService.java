@@ -4,11 +4,11 @@ import ru.practicum.ewm.compilation.param.AdminCompilationParam;
 import ru.practicum.ewm.compilation.param.PublicCompilationParam;
 import ru.practicum.ewm.compilation.dto.CompilationDto;
 
-import java.util.Set;
+import java.util.List;
 
 public interface CompilationService {
 
-    Set<CompilationDto> getCompilations(PublicCompilationParam param);
+    List<CompilationDto> getCompilations(PublicCompilationParam param);
 
     CompilationDto getCompilationById(PublicCompilationParam param);
 

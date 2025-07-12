@@ -4,7 +4,6 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.compilation.Compilation;
@@ -22,9 +21,7 @@ import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -34,12 +31,11 @@ public class CompilationServiceImpl implements CompilationService {
     private final EventRepository eventRepository;
 
     @Override
-    public Set<CompilationDto> getCompilations(PublicCompilationParam param) {
+    public List<CompilationDto> getCompilations(PublicCompilationParam param) {
         QCompilation qCompilation = QCompilation.compilation;
         List<BooleanExpression> conditions = new ArrayList<>();
 
-        Sort sortById = Sort.by("id").ascending();
-        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
+        Pageable page = PageRequest.of(param.getFrom(), param.getSize());
 
         if (param.getPinned() != null) {
             conditions.add(QCompilation.compilation.pinned.eq(param.getPinned()));
@@ -67,7 +63,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     public CompilationDto createCompilation(AdminCompilationParam param) {
         NewCompilationDto compilationRequest = param.getCompilationFromRequest();
-        Set<Event> events = new HashSet<>();
+        List<Event> events = new ArrayList<>();
 
         if (compilationRequest.hasEvents()) {
             for (Long eventId : compilationRequest.getEvents()) {
@@ -92,7 +88,7 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation oldCompilation = compilationRepository.findById(compId).orElseThrow(
                 () -> new NotFoundException(String.format("Подборка id = %d не найдена", compId))
         );
-        Set<Event> events = oldCompilation.getEvents();
+        List<Event> events = oldCompilation.getEvents();
 
         if (compilationRequest.hasEvents()) {
             for (Long eventId : compilationRequest.getEvents()) {

@@ -4,12 +4,13 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "categories")
 @Getter
 @Setter
 @ToString
-@EqualsAndHashCode(of = "id")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 public class Category {
@@ -22,4 +23,17 @@ public class Category {
     Long id;
     @Column(unique = true, nullable = false)
     String name;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Category category = (Category) o;
+        return Objects.equals(id, category.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

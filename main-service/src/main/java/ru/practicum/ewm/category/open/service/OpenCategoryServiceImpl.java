@@ -13,6 +13,7 @@ import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.exception.NotFoundException;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,15 +25,15 @@ public class OpenCategoryServiceImpl implements OpenCategoryService {
 
     @Override
     public Collection<CategoryDto> getCategories(int from, int size) {
-        Sort sortById = Sort.by("id").ascending();
-        Pageable page = PageRequest.of(from, size, sortById);
+        Pageable page = PageRequest.of(from, size);
         List<Category> categories = repository.findAll(page).getContent();
         if (categories.isEmpty()) {
             return List.of();
         }
         return categories.stream()
                 .map(CategoryMapper::mapToCategoryDto)
-                .collect(Collectors.toSet());
+                .sorted(Comparator.comparing(CategoryDto::getId))
+                .toList();
     }
 
     @Override
