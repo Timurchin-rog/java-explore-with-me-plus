@@ -1,6 +1,5 @@
 package ru.practicum.stats.service;
 
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -9,6 +8,7 @@ import ru.practicum.dto.HitDto;
 import ru.practicum.dto.NewHitDto;
 import ru.practicum.dto.ViewDto;
 import ru.practicum.stats.controller.StatsParam;
+import ru.practicum.stats.exception.ValidationException;
 import ru.practicum.stats.mapper.HitMapper;
 import ru.practicum.stats.mapper.ViewMapper;
 import ru.practicum.stats.model.Hit;
