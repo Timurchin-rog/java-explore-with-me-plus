@@ -5,4 +5,5 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import ru.practicum.ewm.request.model.Request;
 
 public interface RequestRepository extends JpaRepository<Request, Long>, QuerydslPredicateExecutor<Request> {
+
 }

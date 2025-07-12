@@ -208,8 +208,6 @@ public class EventServiceImpl implements EventService {
         if ((event.getParticipantLimit() == 0 || !event.getRequestModeration())
                 && requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed"))
             return updatedRequests;
-        if (event.getConfirmedRequests() >= event.getParticipantLimit())
-            throw new ConflictException("Достигнут лимит запросов на участие в событии");
 
         for (Long requestId : requestOnUpdateStatus.getRequestIds()) {
             Request request = requestRepository.findById(requestId).orElseThrow(
@@ -225,6 +223,8 @@ public class EventServiceImpl implements EventService {
             }
 
             if (requestOnUpdateStatus.getStatus().equalsIgnoreCase("confirmed")) {
+                if (event.getConfirmedRequests() >= event.getParticipantLimit())
+                    throw new ConflictException("Достигнут лимит подтверждённых запросов на участие в событии");
                 request.setState(RequestState.CONFIRMED);
                 requestRepository.save(request);
                 event.increaseCountOfConfirmedRequest();

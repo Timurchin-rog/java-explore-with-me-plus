@@ -1,9 +1,6 @@
 package ru.practicum.ewm.event.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.ToString;
@@ -34,7 +31,7 @@ public class NewEventDto {
 
     Boolean paid;
 
-    @Positive
+    @PositiveOrZero
     Long participantLimit;
 
     Boolean requestModeration;
