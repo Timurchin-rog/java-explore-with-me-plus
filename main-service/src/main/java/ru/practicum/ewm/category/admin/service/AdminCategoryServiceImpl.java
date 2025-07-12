@@ -45,11 +45,11 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
     @Override
     public CategoryDto pathCategory(long catId, NewCategoryRequest category) {
         Category oldCategory = getCategoryBiId(catId);
-        if (oldCategory.getName().equals(category.getName())) {
+        if (oldCategory.getTitle().equals(category.getName())) {
             return CategoryMapper.mapToCategoryDto(oldCategory);
         }
         isDuplicateName(category.getName());
-        oldCategory.setName(category.getName());
+        oldCategory.setTitle(category.getName());
         repository.save(oldCategory);
         return CategoryMapper.mapToCategoryDto(oldCategory);
     }

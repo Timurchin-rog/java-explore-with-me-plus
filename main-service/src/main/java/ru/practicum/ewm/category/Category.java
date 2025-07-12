@@ -14,15 +14,15 @@ import java.util.Objects;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 public class Category {
-    public Category(String name) {
-        this.name = name;
+    public Category(String title) {
+        this.title = title;
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
     @Column(unique = true, nullable = false)
-    String name;
+    String title;
 
     @Override
     public boolean equals(Object o) {
