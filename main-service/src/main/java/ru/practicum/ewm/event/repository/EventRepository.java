@@ -7,6 +7,8 @@ import ru.practicum.ewm.event.model.Event;
 import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPredicateExecutor<Event> {
+
     Optional<Event> findByIdAndInitiator_Id(long eventId, long userId);
+
     boolean existsByCategoryId(long categoryId);
 }

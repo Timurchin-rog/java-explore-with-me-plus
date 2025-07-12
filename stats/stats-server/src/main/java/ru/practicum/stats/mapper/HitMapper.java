@@ -4,9 +4,6 @@ import ru.practicum.dto.HitDto;
 import ru.practicum.dto.NewHitDto;
 import ru.practicum.stats.model.Hit;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 public class HitMapper {
 
     public static HitDto mapToHitDto(Hit hit) {
