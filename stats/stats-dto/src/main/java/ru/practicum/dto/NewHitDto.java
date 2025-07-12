@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
-
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
@@ -23,5 +21,5 @@ public class NewHitDto {
         String ip;
 
         @NotNull(message = "Timestamp must not be null")
-        LocalDateTime timestamp;
+        String timestamp;
 }

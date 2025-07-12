@@ -394,7 +394,7 @@ public class EventServiceImpl implements EventService {
                 .app("ewm-main-service")
                 .ip(request.getRemoteAddr())
                 .uri(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now().format(formatter))
                 .build();
         statsClient.registerHit(hitDto);
     }

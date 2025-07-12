@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -15,5 +13,5 @@ public class HitDto {
     String app;
     String uri;
     String ip;
-    LocalDateTime timestamp;
+    String timestamp;
 }

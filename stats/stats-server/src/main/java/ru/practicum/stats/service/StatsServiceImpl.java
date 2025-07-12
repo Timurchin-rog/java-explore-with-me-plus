@@ -1,6 +1,5 @@
 package ru.practicum.stats.service;
 
-import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,13 +11,11 @@ import ru.practicum.stats.controller.StatsParam;
 import ru.practicum.stats.mapper.HitMapper;
 import ru.practicum.stats.mapper.ViewMapper;
 import ru.practicum.stats.model.Hit;
-import ru.practicum.stats.model.QHit;
 import ru.practicum.stats.model.View;
 import ru.practicum.stats.repository.HitRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -40,50 +37,36 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<ViewDto> getViews(StatsParam param) {
-        log.debug("параметры для получения количества просмотров {}", param);
-        QHit qHit = QHit.hit;
-        List<BooleanExpression> conditions = new ArrayList<>();
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
-        LocalDateTime start = LocalDateTime.parse(param.getStart(), formatter).minusSeconds(1);
-        LocalDateTime end = LocalDateTime.parse(param.getEnd(), formatter).plusSeconds(1);
-
-        conditions.add(QHit.hit.timestamp.between(start, end));
-
-        if (param.getUris() != null) {
-            for (String uriParam : param.getUris())
-                conditions.add(QHit.hit.uri.eq(uriParam));
+        LocalDateTime start = LocalDateTime.parse(param.getStart(), formatter);
+        LocalDateTime end = LocalDateTime.parse(param.getEnd(), formatter);
+        List<Hit> hits;
+        List<String> uris = param.getUris();
+        boolean isUnique = param.isUnique();
+        if (uris == null) {
+            hits = hitRepository.findAllHitsWithoutUris(start, end);
+            if (isUnique)
+                hits = hits.stream()
+                        .distinct()
+                        .toList();
+        } else {
+            hits = hitRepository.findAllHitsWithUris(start, end, uris);
+            if (isUnique)
+                hits = hits.stream()
+                        .distinct()
+                        .toList();
         }
-
-        BooleanExpression finalCondition = conditions.stream()
-                .reduce(BooleanExpression::and)
-                .get();
-
-        Iterable<Hit> hitsFromRep = hitRepository.findAll(finalCondition);
-        log.debug("что получаем из базы? {}", hitsFromRep);
-        List<Hit> hits = new ArrayList<>();
-
-        for (Hit hit : hitsFromRep)
-            hits.add(hit);
-
-        if (param.isUnique())
-            hits = hits.stream()
-                    .distinct()
-                    .toList();
-
         List<View> views = hits.stream()
                 .map(ViewMapper::mapToView)
                 .distinct()
                 .peek(view -> {
-                    if (param.isUnique())
+                    if (isUnique)
                         view.setHits(1);
                     else
                         view.setHits(hitRepository.findCountViews(view.getApp(), view.getUri()));
                 })
                 .sorted(Comparator.comparing(View::getHits).reversed())
                 .toList();
-        log.debug("просмотры которые возвращаем из статистки по фильтру {}", views);
-        log.debug("все просмотры что есть {}", hitRepository.findAll());
         return ViewMapper.mapToViewDto(views);
     }
 }
