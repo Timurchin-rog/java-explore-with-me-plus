@@ -60,7 +60,7 @@ public class AdminCategoryServiceImpl implements AdminCategoryService {
     }
 
     private void isDuplicateName(String name) {
-        if (repository.findByNameLike(name).isPresent()) {
+        if (repository.findByTitleLike(name).isPresent()) {
             log.debug("Название категории {} уже есть в базе", name);
             throw new ConflictException("Название категории " + name + "уже есть в базе");
         }
