@@ -3,9 +3,9 @@ package ru.practicum.ewm.compilation;
 import ru.practicum.ewm.compilation.dto.CompilationDto;
 import ru.practicum.ewm.compilation.dto.NewCompilationDto;
 import ru.practicum.ewm.compilation.dto.UpdateCompilationRequest;
+import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.exception.ValidationException;
-import ru.practicum.ewm.event.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;

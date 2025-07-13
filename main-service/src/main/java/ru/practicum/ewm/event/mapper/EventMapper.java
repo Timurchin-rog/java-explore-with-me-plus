@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event;
+package ru.practicum.ewm.event.mapper;
 
 import ru.practicum.ewm.category.CategoryMapper;
 import ru.practicum.ewm.event.dto.*;
