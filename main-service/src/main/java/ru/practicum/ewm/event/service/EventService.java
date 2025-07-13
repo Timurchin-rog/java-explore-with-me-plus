@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.service;
 
+import ru.practicum.ewm.event.param.OpenCommentParam;
 import ru.practicum.ewm.event.param.PrivateCommentParam;
 import ru.practicum.ewm.event.param.PrivateEventParam;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,4 +38,6 @@ public interface EventService {
     List<CommentDto> getCommentsOfUser(PrivateCommentParam param);
 
     CommentDto createComment(PrivateCommentParam param);
+
+    List<CommentDto> getComments(OpenCommentParam param);
 }

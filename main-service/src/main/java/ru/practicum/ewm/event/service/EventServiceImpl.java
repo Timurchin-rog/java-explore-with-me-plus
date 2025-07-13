@@ -21,6 +21,7 @@ import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.mapper.CommentMapper;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.*;
+import ru.practicum.ewm.event.param.OpenCommentParam;
 import ru.practicum.ewm.event.param.PrivateCommentParam;
 import ru.practicum.ewm.event.param.PrivateEventParam;
 import ru.practicum.ewm.event.dto.*;
@@ -373,7 +374,11 @@ public class EventServiceImpl implements EventService {
     public List<CommentDto> getCommentsOfUser(PrivateCommentParam param) {
         Sort sortById = Sort.by(Sort.Direction.ASC, "id");
         Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
-        return CommentMapper.mapToCommentDto(commentRepository.findAllByUser_id(param.getUserId(), page));
+        return CommentMapper.mapToCommentDto(commentRepository.findAllByUser_idAndEvent_id(
+                param.getUserId(),
+                param.getEventId(),
+                page)
+        );
     }
 
     @Transactional
@@ -392,6 +397,13 @@ public class EventServiceImpl implements EventService {
         newComment.setEvent(event);
         log.debug("имеем новый комментарий перед маппером {}", newComment);
         return CommentMapper.mapToCommentDto(newComment);
+    }
+
+    @Override
+    public List<CommentDto> getComments(OpenCommentParam param) {
+        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
+        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
+        return CommentMapper.mapToCommentDto(commentRepository.findAllByEvent_id(param.getEventId(), page));
     }
 
     private void checkFilterDateRangeIsGood(LocalDateTime dateBegin, LocalDateTime dateEnd) {
