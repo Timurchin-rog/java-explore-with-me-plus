@@ -378,10 +378,18 @@ public class EventServiceImpl implements EventService {
     public List<CommentDto> getCommentsOfUser(PrivateCommentParam param) {
         Sort sortById = Sort.by(Sort.Direction.ASC, "id");
         Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
-        return CommentMapper.mapToCommentDto(commentRepository.findAllByUser_idAndEvent_id(
-                param.getUserId(),
-                param.getEventId(),
-                page)
+
+        QComment qComment = QComment.comment;
+        List<BooleanExpression> conditions = new ArrayList<>();
+
+        conditions.add(QComment.comment.event.id.eq(param.getEventId()));
+        conditions.add(QComment.comment.user.id.eq(param.getUserId()));
+
+        BooleanExpression finalCondition = conditions.stream()
+                .reduce(BooleanExpression::and)
+                .get();
+
+        return CommentMapper.mapToCommentDto(commentRepository.findAll(finalCondition, page)
         );
     }
 
@@ -407,7 +415,17 @@ public class EventServiceImpl implements EventService {
     public List<CommentDto> getComments(OpenCommentParam param) {
         Sort sortById = Sort.by(Sort.Direction.ASC, "id");
         Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
-        return CommentMapper.mapToCommentDto(commentRepository.findAllByEvent_id(param.getEventId(), page));
+
+        QComment qComment = QComment.comment;
+        List<BooleanExpression> conditions = new ArrayList<>();
+
+        conditions.add(QComment.comment.event.id.eq(param.getEventId()));
+
+        BooleanExpression finalCondition = conditions.stream()
+                .reduce(BooleanExpression::and)
+                .get();
+
+        return CommentMapper.mapToCommentDto(commentRepository.findAll(finalCondition, page));
     }
 
     @Override
