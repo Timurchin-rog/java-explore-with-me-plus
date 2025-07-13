@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event.dto;
+package ru.practicum.ewm.event.dto.location;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;

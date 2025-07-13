@@ -1,6 +1,7 @@
 package ru.practicum.ewm.event.mapper;
 
-import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.comment.CommentDto;
+import ru.practicum.ewm.event.dto.comment.NewCommentDto;
 import ru.practicum.ewm.event.model.Comment;
 
 import java.time.format.DateTimeFormatter;

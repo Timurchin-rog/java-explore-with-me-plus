@@ -5,7 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.comment.CommentDto;
+import ru.practicum.ewm.event.dto.comment.NewCommentDto;
 import ru.practicum.ewm.event.param.PrivateCommentParam;
 import ru.practicum.ewm.event.service.EventService;
 

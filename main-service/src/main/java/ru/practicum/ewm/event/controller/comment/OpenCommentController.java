@@ -2,7 +2,7 @@ package ru.practicum.ewm.event.controller.comment;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.event.dto.CommentDto;
+import ru.practicum.ewm.event.dto.comment.CommentDto;
 import ru.practicum.ewm.event.param.OpenCommentParam;
 import ru.practicum.ewm.event.service.EventService;
 

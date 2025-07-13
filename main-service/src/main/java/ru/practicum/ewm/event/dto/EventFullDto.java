@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.ewm.category.dto.CategoryDto;
+import ru.practicum.ewm.event.dto.location.LocationDto;
 import ru.practicum.ewm.user.dto.UserShortDto;
 
 @Getter

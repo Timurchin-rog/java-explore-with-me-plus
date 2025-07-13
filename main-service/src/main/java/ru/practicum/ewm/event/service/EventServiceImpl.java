@@ -18,9 +18,13 @@ import ru.practicum.dto.NewHitDto;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.event.dto.comment.CommentDto;
+import ru.practicum.ewm.event.dto.comment.NewCommentDto;
+import ru.practicum.ewm.event.dto.comment.UpdateCommentDto;
 import ru.practicum.ewm.event.mapper.CommentMapper;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.*;
+import ru.practicum.ewm.event.param.AdminCommentParam;
 import ru.practicum.ewm.event.param.OpenCommentParam;
 import ru.practicum.ewm.event.param.PrivateCommentParam;
 import ru.practicum.ewm.event.param.PrivateEventParam;
@@ -404,6 +408,37 @@ public class EventServiceImpl implements EventService {
         Sort sortById = Sort.by(Sort.Direction.ASC, "id");
         Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
         return CommentMapper.mapToCommentDto(commentRepository.findAllByEvent_id(param.getEventId(), page));
+    }
+
+    @Override
+    public CommentDto getCommentById(AdminCommentParam param) {
+        Comment comment = commentRepository.findById(param.getCommentId()).orElseThrow(
+                () -> new NotFoundException(String.format("Комментарий id = %d не найден", param.getCommentId()))
+        );
+        return CommentMapper.mapToCommentDto(comment);
+    }
+
+    @Transactional
+    @Override
+    public CommentDto updateComment(AdminCommentParam param) {
+        Comment oldComment = commentRepository.findById(param.getCommentId()).orElseThrow(
+                () -> new NotFoundException(String.format("Комментарий id = %d не найден", param.getCommentId()))
+        );
+        UpdateCommentDto commentOnUpdate = param.getComment();
+        if (commentOnUpdate.hasDescription()) {
+            oldComment.setDescription(commentOnUpdate.getDescription());
+        }
+        commentRepository.save(oldComment);
+        return CommentMapper.mapToCommentDto(oldComment);
+    }
+
+    @Transactional
+    @Override
+    public void removeComment(AdminCommentParam param) {
+        long commentId = param.getCommentId();
+        if (commentRepository.findById(commentId).isEmpty())
+            throw new NotFoundException(String.format("Комментарий id = %d не найден", commentId));
+        commentRepository.deleteById(commentId);
     }
 
     private void checkFilterDateRangeIsGood(LocalDateTime dateBegin, LocalDateTime dateEnd) {

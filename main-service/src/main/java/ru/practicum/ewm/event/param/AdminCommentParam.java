@@ -5,16 +5,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.ewm.event.dto.comment.NewCommentDto;
+import ru.practicum.ewm.event.dto.comment.UpdateCommentDto;
 
 @Getter
 @Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PrivateCommentParam {
-    Long userId;
+public class AdminCommentParam {
     Long eventId;
-    int from;
-    int size;
-    NewCommentDto newComment;
+    Long commentId;
+    UpdateCommentDto comment;
 }

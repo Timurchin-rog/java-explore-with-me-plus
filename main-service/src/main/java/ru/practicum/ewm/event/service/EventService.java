@@ -1,5 +1,7 @@
 package ru.practicum.ewm.event.service;
 
+import ru.practicum.ewm.event.dto.comment.CommentDto;
+import ru.practicum.ewm.event.param.AdminCommentParam;
 import ru.practicum.ewm.event.param.OpenCommentParam;
 import ru.practicum.ewm.event.param.PrivateCommentParam;
 import ru.practicum.ewm.event.param.PrivateEventParam;
@@ -40,4 +42,10 @@ public interface EventService {
     CommentDto createComment(PrivateCommentParam param);
 
     List<CommentDto> getComments(OpenCommentParam param);
+
+    CommentDto getCommentById(AdminCommentParam param);
+
+    CommentDto updateComment(AdminCommentParam param);
+
+    void removeComment(AdminCommentParam param);
 }
