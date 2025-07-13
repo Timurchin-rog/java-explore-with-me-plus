@@ -1,11 +1,11 @@
-package ru.practicum.ewm.event.controller;
+package ru.practicum.ewm.event.controller.event;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.event.PrivateEventParam;
+import ru.practicum.ewm.event.param.PrivateEventParam;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;

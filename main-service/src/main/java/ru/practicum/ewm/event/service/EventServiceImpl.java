@@ -18,16 +18,16 @@ import ru.practicum.dto.NewHitDto;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.event.mapper.CommentMapper;
 import ru.practicum.ewm.event.mapper.EventMapper;
-import ru.practicum.ewm.event.model.EventState;
-import ru.practicum.ewm.event.model.QEvent;
-import ru.practicum.ewm.event.PrivateEventParam;
+import ru.practicum.ewm.event.model.*;
+import ru.practicum.ewm.event.param.PrivateCommentParam;
+import ru.practicum.ewm.event.param.PrivateEventParam;
 import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.repository.CommentRepository;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
-import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -63,6 +63,7 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
     private final RequestRepository requestRepository;
+    private final CommentRepository commentRepository;
     private final StatsClient statsClient;
     private final JPAQueryFactory queryFactory;
 
@@ -366,6 +367,31 @@ public class EventServiceImpl implements EventService {
         EventFullDto eventFullDto = EventMapper.mapToEventFullDto(event);
         eventFullDto.setViews(countView(event.getId(), event.getCreatedOn(), LocalDateTime.now()));
         return eventFullDto;
+    }
+
+    @Override
+    public List<CommentDto> getCommentsOfUser(PrivateCommentParam param) {
+        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
+        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
+        return CommentMapper.mapToCommentDto(commentRepository.findAllByUser_id(param.getUserId(), page));
+    }
+
+    @Transactional
+    @Override
+    public CommentDto createComment(PrivateCommentParam param) {
+        log.debug("получили параметры для создания комментария к событию {}", param);
+        NewCommentDto commentFromRequest = param.getNewComment();
+        User user = userRepository.findById(param.getUserId()).orElseThrow(
+                () -> new NotFoundException(String.format("Пользователь id = %d не найден", param.getUserId()))
+        );
+        Event event = eventRepository.findById(param.getEventId()).orElseThrow(
+                () -> new NotFoundException(String.format("Событие id = %d не найдено", param.getEventId()))
+        );
+        Comment newComment = commentRepository.save(CommentMapper.mapFromRequest(commentFromRequest));
+        newComment.setUser(user);
+        newComment.setEvent(event);
+        log.debug("имеем новый комментарий перед маппером {}", newComment);
+        return CommentMapper.mapToCommentDto(newComment);
     }
 
     private void checkFilterDateRangeIsGood(LocalDateTime dateBegin, LocalDateTime dateEnd) {
