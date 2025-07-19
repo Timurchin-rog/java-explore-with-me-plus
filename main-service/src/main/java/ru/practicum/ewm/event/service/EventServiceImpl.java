@@ -17,17 +17,22 @@ import ru.practicum.dto.ViewDto;
 import ru.practicum.dto.NewHitDto;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
-import ru.practicum.ewm.event.*;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
-import ru.practicum.ewm.event.model.EventState;
-import ru.practicum.ewm.event.model.QEvent;
-import ru.practicum.ewm.event.PrivateEventParam;
+import ru.practicum.ewm.event.dto.comment.CommentDto;
+import ru.practicum.ewm.event.dto.comment.NewCommentDto;
+import ru.practicum.ewm.event.dto.comment.UpdateCommentDto;
+import ru.practicum.ewm.event.mapper.CommentMapper;
+import ru.practicum.ewm.event.mapper.EventMapper;
+import ru.practicum.ewm.event.model.*;
+import ru.practicum.ewm.event.param.AdminCommentParam;
+import ru.practicum.ewm.event.param.OpenCommentParam;
+import ru.practicum.ewm.event.param.PrivateCommentParam;
+import ru.practicum.ewm.event.param.PrivateEventParam;
 import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.repository.CommentRepository;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
-import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -63,6 +68,7 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
     private final RequestRepository requestRepository;
+    private final CommentRepository commentRepository;
     private final StatsClient statsClient;
     private final JPAQueryFactory queryFactory;
 
@@ -366,6 +372,91 @@ public class EventServiceImpl implements EventService {
         EventFullDto eventFullDto = EventMapper.mapToEventFullDto(event);
         eventFullDto.setViews(countView(event.getId(), event.getCreatedOn(), LocalDateTime.now()));
         return eventFullDto;
+    }
+
+    @Override
+    public List<CommentDto> getCommentsOfUser(PrivateCommentParam param) {
+        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
+        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
+
+        QComment qComment = QComment.comment;
+        List<BooleanExpression> conditions = new ArrayList<>();
+
+        conditions.add(QComment.comment.event.id.eq(param.getEventId()));
+        conditions.add(QComment.comment.user.id.eq(param.getUserId()));
+
+        BooleanExpression finalCondition = conditions.stream()
+                .reduce(BooleanExpression::and)
+                .get();
+
+        return CommentMapper.mapToCommentDto(commentRepository.findAll(finalCondition, page)
+        );
+    }
+
+    @Transactional
+    @Override
+    public CommentDto createComment(PrivateCommentParam param) {
+        log.debug("получили параметры для создания комментария к событию {}", param);
+        NewCommentDto commentFromRequest = param.getNewComment();
+        User user = userRepository.findById(param.getUserId()).orElseThrow(
+                () -> new NotFoundException(String.format("Пользователь id = %d не найден", param.getUserId()))
+        );
+        Event event = eventRepository.findById(param.getEventId()).orElseThrow(
+                () -> new NotFoundException(String.format("Событие id = %d не найдено", param.getEventId()))
+        );
+        Comment newComment = commentRepository.save(CommentMapper.mapFromRequest(commentFromRequest));
+        newComment.setUser(user);
+        newComment.setEvent(event);
+        log.debug("имеем новый комментарий перед маппером {}", newComment);
+        return CommentMapper.mapToCommentDto(newComment);
+    }
+
+    @Override
+    public List<CommentDto> getComments(OpenCommentParam param) {
+        Sort sortById = Sort.by(Sort.Direction.ASC, "id");
+        Pageable page = PageRequest.of(param.getFrom(), param.getSize(), sortById);
+
+        QComment qComment = QComment.comment;
+        List<BooleanExpression> conditions = new ArrayList<>();
+
+        conditions.add(QComment.comment.event.id.eq(param.getEventId()));
+
+        BooleanExpression finalCondition = conditions.stream()
+                .reduce(BooleanExpression::and)
+                .get();
+
+        return CommentMapper.mapToCommentDto(commentRepository.findAll(finalCondition, page));
+    }
+
+    @Override
+    public CommentDto getCommentById(AdminCommentParam param) {
+        Comment comment = commentRepository.findById(param.getCommentId()).orElseThrow(
+                () -> new NotFoundException(String.format("Комментарий id = %d не найден", param.getCommentId()))
+        );
+        return CommentMapper.mapToCommentDto(comment);
+    }
+
+    @Transactional
+    @Override
+    public CommentDto updateComment(AdminCommentParam param) {
+        Comment oldComment = commentRepository.findById(param.getCommentId()).orElseThrow(
+                () -> new NotFoundException(String.format("Комментарий id = %d не найден", param.getCommentId()))
+        );
+        UpdateCommentDto commentOnUpdate = param.getComment();
+        if (commentOnUpdate.hasDescription()) {
+            oldComment.setDescription(commentOnUpdate.getDescription());
+        }
+        commentRepository.save(oldComment);
+        return CommentMapper.mapToCommentDto(oldComment);
+    }
+
+    @Transactional
+    @Override
+    public void removeComment(AdminCommentParam param) {
+        long commentId = param.getCommentId();
+        if (commentRepository.findById(commentId).isEmpty())
+            throw new NotFoundException(String.format("Комментарий id = %d не найден", commentId));
+        commentRepository.deleteById(commentId);
     }
 
     private void checkFilterDateRangeIsGood(LocalDateTime dateBegin, LocalDateTime dateEnd) {

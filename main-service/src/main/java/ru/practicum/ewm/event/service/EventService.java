@@ -1,6 +1,10 @@
 package ru.practicum.ewm.event.service;
 
-import ru.practicum.ewm.event.PrivateEventParam;
+import ru.practicum.ewm.event.dto.comment.CommentDto;
+import ru.practicum.ewm.event.param.AdminCommentParam;
+import ru.practicum.ewm.event.param.OpenCommentParam;
+import ru.practicum.ewm.event.param.PrivateCommentParam;
+import ru.practicum.ewm.event.param.PrivateEventParam;
 import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.ewm.event.dto.*;
 
@@ -32,4 +36,16 @@ public interface EventService {
     Collection<EventFullDto> getAdminAllEvents(EventFilter filter);
 
     EventFullDto updateByAdmin(Long eventId, UpdateEventAdminRequest updateEvent);
+
+    List<CommentDto> getCommentsOfUser(PrivateCommentParam param);
+
+    CommentDto createComment(PrivateCommentParam param);
+
+    List<CommentDto> getComments(OpenCommentParam param);
+
+    CommentDto getCommentById(AdminCommentParam param);
+
+    CommentDto updateComment(AdminCommentParam param);
+
+    void removeComment(AdminCommentParam param);
 }

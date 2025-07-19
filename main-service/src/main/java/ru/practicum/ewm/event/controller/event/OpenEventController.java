@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event.controller;
+package ru.practicum.ewm.event.controller.event;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Positive;

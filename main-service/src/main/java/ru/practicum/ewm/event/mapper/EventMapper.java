@@ -1,7 +1,9 @@
-package ru.practicum.ewm.event;
+package ru.practicum.ewm.event.mapper;
 
 import ru.practicum.ewm.category.CategoryMapper;
 import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.event.dto.location.LocationDto;
+import ru.practicum.ewm.event.dto.location.NewLocationDto;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.event.model.Location;

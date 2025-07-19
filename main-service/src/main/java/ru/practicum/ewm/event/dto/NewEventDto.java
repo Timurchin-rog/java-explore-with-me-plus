@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
+import ru.practicum.ewm.event.dto.location.NewLocationDto;
 
 @Getter
 @ToString
