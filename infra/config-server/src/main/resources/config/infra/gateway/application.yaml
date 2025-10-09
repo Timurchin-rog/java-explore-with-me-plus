@@ -1,0 +1,76 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      discovery.locator.enabled: true
+      routes:
+        - id: shopping_cart_service_route
+          uri: lb://shopping-cart
+          predicates:
+            - Path=/api/v1/shopping-cart/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /${segment}
+
+        - id: shopping_store_service_route
+          uri: lb://shopping-store
+          predicates:
+            - Path=/api/v1/shopping-store/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /${segment}
+            - name: Retry
+              args:
+                retries: 3
+                methods: GET, POST
+                backoff:
+                  firstBackoff: 10ms
+                  maxBackoff: 50ms
+                  factor: 2
+                  basedOnPreviousValue: false
+
+        - id: warehouse_service_route
+          uri: lb://warehouse
+          predicates:
+            - Path=/api/v1/warehouse/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /${segment}
+
+        - id: order_service_route
+          uri: lb://order
+          predicates:
+            - Path=/api/v1/order/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /${segment}
+
+        - id: payment_service_route
+          uri: lb://payment
+          predicates:
+            - Path=/api/v1/payment/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /${segment}
+            - name: Retry
+              args:
+                retries: 3
+                methods: POST
+                backoff:
+                  firstBackoff: 20ms
+                  maxBackoff: 100ms
+                  factor: 2
+
+        - id: delivery_service_route
+          uri: lb://delivery
+          predicates:
+            - Path=/api/v1/delivery/**
+          filters:
+            - RewritePath=/api/v1/(?<segment>.*), /${segment}
+
+  output:
+    ansi:
+      enabled: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: gateway,health,info
