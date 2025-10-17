@@ -1,10 +1,14 @@
 package ru.practicum.client;
 
-
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.policy.MaxAttemptsRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -17,19 +21,22 @@ import java.util.List;
 @Slf4j
 @Service
 public class StatsClient {
+    private final DiscoveryClient discoveryClient;
+    private final String statsServiceId;
     private final RestClient restClient;
-    private final String statsServiceUrl;
 
-    public StatsClient(@Value("${stats-server.url}") String statsServiceUrl) {
-        this.statsServiceUrl = statsServiceUrl;
-        this.restClient = RestClient.create(statsServiceUrl);
+    public StatsClient(DiscoveryClient discoveryClient,
+                       @Value("${discovery:services:stats-server-id}") String statsServiceId) {
+        this.discoveryClient = discoveryClient;
+        this.statsServiceId = statsServiceId;
+        this.restClient = RestClient.create(statsServiceId);
     }
 
     // Регистрация "хита"
     public void registerHit(@Valid NewHitDto hitDto) {
         try {
             restClient.post()
-                    .uri(statsServiceUrl + "/hit")
+                    .uri(getInstance() + "/hit")
                     .body(hitDto)
                     .retrieve()
                     .toBodilessEntity();
@@ -46,7 +53,7 @@ public class StatsClient {
             boolean unique
     ) {
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(statsServiceUrl + "/stats")
+            String url = UriComponentsBuilder.fromHttpUrl(getInstance() + "/stats")
                     .queryParam("start", start)
                     .queryParam("end", end)
                     .queryParam("uris", uris)
@@ -60,8 +67,18 @@ public class StatsClient {
                     .body(new ParameterizedTypeReference<>() {
                     });
         } catch (RestClientException e) {
-            log.error("ошибка при получении статистики");
+            log.error("Ошибка при получении статистики.");
         }
         return List.of();
+    }
+
+    private ServiceInstance getInstance() {
+        try {
+            return discoveryClient
+                    .getInstances(statsServiceId)
+                    .getFirst();
+        } catch (Exception exception) {
+            throw new StatsServerUnavailable("Ошибка обнаружения адреса сервиса статистики");
+        }
     }
 }
